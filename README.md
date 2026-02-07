@@ -61,7 +61,9 @@ llm-intent-orchestration/
 │   └── tasks/               # Task routers for each agent
 ├── configs/                 # Configuration files
 ├── tests/                   # Unit tests
-└── docs/                    # Documentation
+├── docs/                    # Documentation
+├── tools/                   # Tools
+└── data/                    # Data
 ```
 
 ---
