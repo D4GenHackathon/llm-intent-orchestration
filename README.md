@@ -47,6 +47,10 @@ source $(poetry env info --path)/bin/activate
 
 # Or for Poetry 1.x
 poetry shell
+
+# Install FastMCP protocol
+pip install fastmcp
+
 ```
 
 ---
@@ -56,14 +60,24 @@ poetry shell
 ```
 llm-intent-orchestration/
 ├── src/
-│   ├── main.py              # Entry point with menu interface
-│   ├── agents/              # CrewAI agent definitions
-│   └── tasks/               # Task routers for each agent
+│   ├── main.py              # CLI entry point in FastMCP server with menu interface
+│   ├── crew.py              # Multi-agent orchestration
+│   ├── agents/
+│   │   └── agents.py        # LLM Agent logic (Gemini LLM)
+│   └── tasks/               # Task router 
 ├── configs/                 # Configuration files
 ├── tests/                   # Unit tests
 ├── docs/                    # Documentation
 ├── tools/                   # Tools
-└── data/                    # Data
+├── data/                    # Data
+└── .env                     # Environment variables (GEMINI_API_KEY)
+```
+
+### Running the Application
+
+```bash
+# CLI Menu
+python src/main.py
 ```
 
 ---
@@ -75,10 +89,10 @@ llm-intent-orchestration/
 3. CrewAI Tutorial: [youtu.be/sPzc6hMg7So](https://www.youtube.com/watch?v=sPzc6hMg7So)
 4. MCP Learning Resources: [youtu.be/QIOk4XZ5XNU](https://youtu.be/QIOk4XZ5XNU)
 5. CrewAI + FastMCP: [github.com/ashishpatel26/Crewai-MCP-Course](https://github.com/ashishpatel26/Crewai-MCP-Course)
+6. Integration with FastMCP via [langchain-mcp-adapters](https://github.com/langchain-ai/langchain-mcp-adapters)
 
 ## Future Work
 1. Giang task
-- Integration with FastMCP via [langchain-mcp-adapters](https://github.com/langchain-ai/langchain-mcp-adapters)
 - Edge AI deployment for resource-constrained devices [Edge AI and IoT in 2025](https://www.youtube.com/watch?v=P54zzvqnVLk&t=874s)
 
 2. Trang task 
