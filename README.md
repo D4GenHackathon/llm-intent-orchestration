@@ -2,7 +2,9 @@
 
 ## Overview
 
-Modern medical research laboratories increasingly integrate smart workspace environments with diverse IoT devices and services. However, clinicians, nurses, and researchers—typically non-IT specialists—require intuitive mechanisms to express their operational intents without manual device configuration. LLMs offer promising capabilities in reasoning, planning, and task orchestration, enabling seamless automation of data retrieval, analysis, and workflow execution.
+Modern medical research laboratories increasingly integrate smart workspace environments with diverse IoT devices and services. However, clinicians, nurses, and researchers—typically non-IT specialists—require intuitive mechanisms to express their operational intents without manual device configuration. LLMs offer promising capabilities in reasoning, planning, and task orchestration, enabling seamless automation of data retrieval, analysis, and workflow execution. More details in [D4Gen Hackathon Presentation](https://docs.google.com/presentation/d/1HHeos7M0_nLo-r4LHhkso9CHGZjUn5kf/edit?slide=id.p18#slide=id.p18)
+
+![Data Auto-Collection in IOT Smart Healthcare Systems](docs/general-architecture/architecture.png)
 
 ## Application Scenarios
 
