@@ -21,22 +21,7 @@ class CustomAgent:
         )
         self.name = name
         self.role = role
-
-    # 4.1 Define security & credentials monitoring agent
-    def security_credentials_monitoring(self):
-        return Agent(
-            role="Security & Credentials Monitoring Agent",
-            backstory=dedent("""Monitors security and credentials for IOT devices, ensuring compliance with Software-Defined Network (SDN) predefined rules and restrictions."""),
-            goal = dedent("""
-            Ensure compliance with predefined rules and restrictions for IOT devices in the Software-Defined Network (SDN) environment,
-            include generating appropriate flow-based SDN data formats (device ip addresses, source ports, destination ports, actions) which satify deployment device status and reporting any security issues for further action.
-            """),
-            tools = [JSONSearchTool()],
-            verbose = True,
-            llm=self.llm,
-        )
-        
-    # 4.2 Define deployment monitoring agent
+    # 4.1 Define deployment monitoring agent (Data collection for diagnosis support)
     def deployment_monitoring(self):
         return Agent(
             role="Deployment Monitoring Agent",
@@ -49,8 +34,37 @@ class CustomAgent:
             verbose = True,
             llm=self.llm,
         )
+
+    # 4.2 Define Edge LLM Agent for sensor data anomaly detection (Future work - Giang)
     
-    # 4.3 Define orchestration agent
+    # 4.3 Define Diagnosis LLM Agent for doctor's diagnosis support  (Data tools using website search and JSON search for patient history, data from IOT devices in the deployment monitoring) 
+    def diagnosis_support(self):
+        return Agent(
+            role="Diagnosis Support Agent",
+            backstory=dedent("""Supports doctors in diagnosing patient conditions based on data from IOT devices and patient history."""),
+            goal = dedent("""
+            Provide support to doctors in diagnosing patient conditions by analyzing data from IOT devices and patient history,
+            include generating recommendations for diagnosis and relevant medical actions step by step with explanations, and report any issues for further action."""),
+            tools = [JSONSearchTool(), WebsiteSearchTool()],
+            verbose = True,
+            llm=self.llm,
+        )
+                
+    # 4.4 Define security & credentials monitoring agent (Future development)
+    def security_credentials_monitoring(self):
+        return Agent(
+            role="Security & Credentials Monitoring Agent",
+            backstory=dedent("""Monitors security and credentials for IOT devices, ensuring compliance with predefined rules and restrictions."""),
+            goal = dedent("""
+            Ensure compliance with predefined rules and restrictions for IOT devices environment,
+            which satify deployment device status and reporting any security issues for further action.
+            """),
+            tools = [JSONSearchTool()],
+            verbose = True,
+            llm=self.llm,
+        )
+        
+    # 4.5 Define orchestration agent (Future development)
     def orchestration(self):
         return Agent(
             role="Orchestration Agent",
@@ -63,7 +77,7 @@ class CustomAgent:
             llm=self.llm,
         )
         
-    # 4.4 Define plan validation agent
+    # 4.6 Define plan validation agent (Future development)
     def plan_validation(self):
         return Agent(
             role="Plan Validation Agent",
@@ -76,29 +90,17 @@ class CustomAgent:
             llm=self.llm,
         )
     
-    # 4.5 Define network auto-configuration agent
+    # 4.7 Define network auto-configuration agent (Future development)
     def network_auto_configuration(self):
         return Agent(
             role="Network Auto-Configuration Agent",
             backstory=dedent("""Automatically configures the network for IOT devices in the patient fall detection system."""),
             goal = dedent("""
-            Ensure that the network for IOT devices is automatically configured according to the predefined rules and restrictions,
-            include generating necessary flow-based SDN data formats (device ip addresses, source ports, destination ports, actions) for network auto-configuration based on the deployment status of each device, and report any issues for further action."""),
+            Ensure that the network for IOT devices is automatically configured according to the predefined rules and restrictions 
+            for network auto-configuration based on the deployment status of each device, and report any issues for further action."""),
             tools = [JSONSearchTool()],
             verbose = True,
             llm=self.llm,
         )
 
-    # 4.6 Define Edge LLM Agent for sensor data anomaly detection (Future work - Giang)
-    # 4.7 Define Diagnosis LLM Agent for doctor's diagnosis support 
-    def diagnosis_support(self):
-        return Agent(
-            role="Diagnosis Support Agent",
-            backstory=dedent("""Provides support for doctors in diagnosing patient conditions based on sensor data and other relevant information."""),
-            goal = dedent("""
-            Ensure that doctors receive accurate and timely support in diagnosing patient conditions,
-            include analyzing sensor data, patient history, and other relevant information to provide recommendations for diagnosis and treatment, and report any issues for further action."""),
-            verbose = True,
-            tools = [WebsiteSearchTool()],
-            llm=self.llm,
-        )
+    
