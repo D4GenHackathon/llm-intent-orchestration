@@ -21,15 +21,15 @@ class CustomAgent:
         )
         self.name = name
         self.role = role
-    # 4.1 Define deployment monitoring agent (Data collection for diagnosis support)
-    def deployment_monitoring(self):
+        
+    # 4.1 Define Cloud LLM Agent for sensor data collection in terms of patient fall detection
+    def device_monitoring(self):
         return Agent(
-            role="Deployment Monitoring Agent",
-            backstory=dedent("""Monitors the deployment of IOT devices in the patient fall detection system."""),
+            role="Device Monitoring Agent",
+            backstory=dedent("""Monitors the camera-based IOT devices in the patient fall detection system."""),
             goal = dedent("""
-            Ensure that IOT devices are deployed according to the safety of patient moving patterns and the predefined rules and restrictions,
-            include deployment status of each device (ip address, status, location and relevant services), and report any issues for further action.
-            """),
+            Monitor the camera-based IOT devices in the patient fall detection system, 
+            including collecting sensor data related to camera feeds to detect potential fall events, analyzing the data to identify such events, and reporting any issues for further action."""),
             tools = [JSONSearchTool()],
             verbose = True,
             llm=self.llm,
@@ -43,7 +43,7 @@ class CustomAgent:
             role="Diagnosis Support Agent",
             backstory=dedent("""Supports doctors in diagnosing patient conditions based on data from IOT devices and patient history."""),
             goal = dedent("""
-            Provide support to doctors in diagnosing patient conditions by analyzing data from IOT devices and patient history,
+            Provide support to doctors in diagnosing patient conditions by analyzing data from IOT devices in the fall detection scenario to know about patient conditions and patient history,
             include generating recommendations for diagnosis and relevant medical actions step by step with explanations, and report any issues for further action."""),
             tools = [JSONSearchTool(), WebsiteSearchTool()],
             verbose = True,
@@ -103,4 +103,16 @@ class CustomAgent:
             llm=self.llm,
         )
 
-    
+    # 4.8 Define deployment monitoring agent (Data collection for diagnosis support)
+    def deployment_monitoring(self):
+        return Agent(
+            role="Deployment Monitoring Agent",
+            backstory=dedent("""Monitors the deployment of IOT devices in the patient fall detection system."""),
+            goal = dedent("""
+            Ensure that IOT devices are deployed according to the safety of patient moving patterns and the predefined rules and restrictions,
+            include deployment status of each device (ip address, status, location and relevant services), and report any issues for further action.
+            """),
+            tools = [JSONSearchTool()],
+            verbose = True,
+            llm=self.llm,
+        )  
