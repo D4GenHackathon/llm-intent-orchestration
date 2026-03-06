@@ -32,6 +32,12 @@ We write a Python script that reads rows from the dataset and simulates a sensor
 ### Step 4: CrewAI Pipeline (Trang's part)
 Wire up your agents.py / tasks.py / crew.py so that when an anomaly is detected, the crew processes it and produces a structured alert.
 ### Step 5: Build the Dashboard
-A simple web UI (Flask + HTML, or React) where nurses/doctors see live alerts coming in with severity, patient info, and recommendations.
+A simple web UI (React) where nurses/doctors see live alerts coming in with severity, patient info, and recommendations.
 ### Step 6: Connect via ONOS
 Configure the network routing so sensor messages reach your CrewAI backend.
+
+# note
+add module joblib and scikit-learn to poetry
+right now: 
+pip install joblib
+pip install scikit-learn
