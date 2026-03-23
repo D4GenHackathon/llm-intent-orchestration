@@ -3,74 +3,48 @@ from dotenv import load_dotenv
 from crewai import Crew
 
 from agents.agents import CustomAgent
-from tasks.IoT_Management import (
-    access_router,
-    device_router,
-    deployment_router,
-    network_config_router,
-    validation_router,
-    diagnosis_router,
-)
+from tasks.IoT_Management import network_router
 from tasks.Edge_Detection import edge_router
+from tasks.Diagnosis_Support import diagnosis_router
 
 load_dotenv()
 
 
 class CustomCrew:
     def __init__(self):
-        self.agents = CustomAgent("crew", "orchestrator")
-        
+        self.agents = CustomAgent("crew", "Biomedical IoT Orchestration Crew")
+    
+    # 4.0 All agents & tasks execution
     def run_all(self):
         """Run all agents and tasks."""
-        security_agent = self.agents.security_credentials_monitoring()
-        deployment_agent = self.agents.deployment_monitoring()
-        orchestration_agent = self.agents.orchestration()
-        validation_agent = self.agents.plan_validation()
-        network_agent = self.agents.network_auto_configuration()
+        edge_detection_agent = self.agents.edge_detection()
         diagnosis_agent = self.agents.diagnosis_support()
-        
-        security_task = access_router(security_agent)
-        deployment_task = deployment_router(deployment_agent)
-        orchestration_task = device_router(orchestration_agent)
-        validation_task = validation_router(validation_agent)
-        network_task = network_config_router(network_agent)
-        diagnosis_task = diagnosis_router(diagnosis_agent)
-        
+        network_agent = self.agents.network_management()
         crew = Crew(
-            agents=[security_agent, deployment_agent, orchestration_agent,
-                    validation_agent, network_agent, diagnosis_agent],
-            tasks=[security_task, deployment_task, orchestration_task,
-                   validation_task, network_task, diagnosis_task],
+            agents=[edge_detection_agent, diagnosis_agent, network_agent],
+            tasks= [
+            ],
             verbose=True,
         )
         return crew.kickoff()
     
-    def run_security(self):
-        """Run security monitoring only."""
-        agent = self.agents.security_credentials_monitoring()
-        task = access_router(agent)
+    # 4.1 Edge detection agent execution
+    def run_edge_detection(self):
+        """Run edge detection only."""
+        agent = self.agents.edge_detection()
+        task = edge_router(agent)
         return Crew(agents=[agent], tasks=[task], verbose=True).kickoff()
     
-    def run_deployment(self):
-        """Run deployment monitoring only."""
-        agent = self.agents.deployment_monitoring()
-        task = deployment_router(agent)
-        return Crew(agents=[agent], tasks=[task], verbose=True).kickoff()
-    
-    def run_orchestration(self):
-        """Run device orchestration only."""
-        agent = self.agents.orchestration()
-        task = device_router(agent)
-        return Crew(agents=[agent], tasks=[task], verbose=True).kickoff()
-    
-    def run_network(self):
-        """Run network configuration only."""
-        agent = self.agents.network_auto_configuration()
-        task = network_config_router(agent)
-        return Crew(agents=[agent], tasks=[task], verbose=True).kickoff()
-    
+    # 4.2 Diagnosis support agent execution
     def run_diagnosis(self):
         """Run diagnosis support only."""
         agent = self.agents.diagnosis_support()
         task = diagnosis_router(agent)
+        return Crew(agents=[agent], tasks=[task], verbose=True).kickoff()
+
+    # 4.3 Network management agent execution
+    def run_network(self):        
+        """Run network management only."""
+        agent = self.agents.network_management()
+        task = network_router(agent)
         return Crew(agents=[agent], tasks=[task], verbose=True).kickoff()
