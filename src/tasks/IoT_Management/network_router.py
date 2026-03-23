@@ -26,8 +26,7 @@ def network_router(agent):
     
     Args:
         agent: The CrewAI agent to execute this task
-        src: Source device identifier
-        dst: Destination device identifier
+        tools: List of ONOS tools for network management
     """
     return Task(
         description=f"Perform network management tasks using ONOS tools.",

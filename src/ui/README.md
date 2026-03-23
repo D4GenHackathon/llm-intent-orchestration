@@ -52,7 +52,7 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-### Seed Data
+### Seed Data (Future Changes)
 
 To populate the database with sample hospitals, devices, sensors, and 30 days of readings:
 
