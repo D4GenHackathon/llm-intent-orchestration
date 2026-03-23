@@ -4,12 +4,10 @@ import uuid
 import json
 from fastmcp import FastMCP
 from crew.crew import CustomCrew
-from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict
-from fastapi.responses import StreamingResponse
 
 # Initialize MCP server
-mcp = FastMCP("Secure AIOT Electronic Health Record Collection & Network Management Orchestration", verbose=True)
+mcp = FastMCP("Secure AIOT Electronic Health Record Collection & Network Management Orchestration")
 custom_crew = CustomCrew()
 
 # 4.0 Define MCP tools to run agents for different tasks in the IoT orchestration scenario

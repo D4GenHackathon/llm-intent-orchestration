@@ -77,8 +77,11 @@ llm-intent-orchestration/
 ### Running the Application
 
 ```bash
-# CLI Menu
-python src/main.py
+# Backend Functionality
+poetry run uvicorn src.main:app --host 0.0.0.0 --port 8001
+
+# Fontend Appearance
+cd src/ui && pnpm dev
 ```
 
 ---

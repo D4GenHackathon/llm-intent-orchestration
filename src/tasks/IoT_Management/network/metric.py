@@ -1,4 +1,4 @@
-from src.main import mcp as mcp_server
+from tasks.main import mcp as mcp_server
 from src.onos import make_onos_request
 from typing import Any, List, Dict, Optional, Union
 

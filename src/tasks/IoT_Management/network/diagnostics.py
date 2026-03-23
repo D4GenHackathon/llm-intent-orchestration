@@ -1,5 +1,5 @@
 from src.onos.app_connection import (ONOS_BASE_URL, ONOS_USER, ONOS_PASSWORD, HTTP_TIMEOUT)
-from src.main import mcp as mcp_server
+from tasks.main import mcp as mcp_server
 from src.onos import make_onos_request
 from typing import Any, List, Dict, Optional, Union
 
