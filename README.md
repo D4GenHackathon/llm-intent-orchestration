@@ -50,8 +50,7 @@ source $(poetry env info --path)/bin/activate
 # Or for Poetry 1.x
 poetry shell
 
-# Install FastMCP protocol
-pip install fastmcp
+
 
 ```
 

@@ -41,8 +41,6 @@ cp .env.example .env
 # Generate NextAuth key
 pnpm dlx auth secret
 
-# Demo admin user test
-npx tsx scripts/seed-admin.ts
 
 # Generate Prisma client and run migrations
 pnpm dlx prisma generate
