@@ -4,7 +4,6 @@ from .deployment_monitoring import deployment_router
 from .network_configuration import network_config_router
 from .plan_validation import validation_router
 from .diagnosis_support import diagnosis_router
-from .edge_detection import edge_router
 
 __all__ = [
     "access_router",
@@ -13,5 +12,4 @@ __all__ = [
     "network_config_router",
     "validation_router",
     "diagnosis_router",
-    "edge_router",
 ]

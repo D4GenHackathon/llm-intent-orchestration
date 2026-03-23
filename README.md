@@ -20,8 +20,8 @@ Wearable and implantable sensors continuously monitor vital signs (blood pressur
 
 **Research Direction:** Edge-based lightweight patient prediction models running directly on sensor devices.
 
-### Scenario 3: Smart Nursing Home Fall Detection
-Camera-based monitoring systems detect resident falls, enhancing safety while reducing staff workload.
+### Scenario 3: Smart Hospital BioIOT Management 
+Camera-based monitoring systems detect resident falls, autonomous medical IOT sensors/actuators management, enhancing safety, performance, energy-awareness while reducing staff workload.
 
 **Key QoS Metrics:** *Bandwidth & Jitter* — High bandwidth ensures video quality; low jitter maintains interpretable video streams.
 
