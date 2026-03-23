@@ -1,6 +1,6 @@
 """FastMCP Server for IoT Orchestration."""
 from fastmcp import FastMCP
-from crew import CustomCrew
+from crew.crew import CustomCrew
 
 # Initialize MCP server
 mcp = FastMCP("IoT Orchestration MCP Server")

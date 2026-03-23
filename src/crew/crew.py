@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from crewai import Crew
 
 from agents.agents import CustomAgent
-from tasks import (
+from tasks.IoT_Management import (
     access_router,
     device_router,
     deployment_router,
@@ -11,6 +11,7 @@ from tasks import (
     validation_router,
     diagnosis_router,
 )
+from tasks.Edge_Detection import edge_router
 
 load_dotenv()
 
@@ -73,4 +74,3 @@ class CustomCrew:
         agent = self.agents.diagnosis_support()
         task = diagnosis_router(agent)
         return Crew(agents=[agent], tasks=[task], verbose=True).kickoff()
-"""FastMCP Server for IoT Orchestration."""
