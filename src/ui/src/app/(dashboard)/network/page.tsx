@@ -101,6 +101,13 @@ export default function NetworkManagementPage() {
     setIsClient(true);
   }, []);
 
+  // Check authentication and authorization
+  useEffect(() => {
+    if (!session) {
+      router.push("/login");
+    }
+  }, [session, router]);
+
   // Network Agent API stream integration
   const networkAgentStream = async (params: any) => {
     try {
@@ -200,8 +207,7 @@ export default function NetworkManagementPage() {
   // Check if user is admin
   const isAdmin = session?.user?.role === "ADMIN";
 
-  if (!session) {
-    router.push("/login");
+  if (!isClient || !session) {
     return null;
   }
 
