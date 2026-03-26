@@ -63,7 +63,7 @@ export async function POST() {
         const zone = await prisma.zone.create({
           data: {
             name: zoneName,
-            description: `Zone ${zIndex + 1} of ${gh.name}`,
+            description: `Medical Zone in ${gh.name}`,
             hospitalId: gh.id,
           },
         });
@@ -71,19 +71,26 @@ export async function POST() {
         for (let dIdx = 0; dIdx < 2; dIdx++) {
           const device = await prisma.device.create({
             data: {
-              name: `Sensor Hub ${zoneName.split(" - ")[0]}-${dIdx + 1}`,
+              name: `Patient Monitor ${zoneName.split(" - ")[0]}-${dIdx + 1}`,
               type: dIdx === 0 ? "ESP32" : "Arduino Nano",
               status: Math.random() > 0.1 ? "ONLINE" : "OFFLINE",
               zoneId: zone.id,
             },
           });
 
-          const deviceSensors = dIdx === 0 ? sensorConfigs.slice(0, 3) : sensorConfigs.slice(3);
+          // Assign 4 sensors per device (rotating through all medical sensors)
+          const startIdx = (dIdx * 4) % sensorConfigs.length;
+          const deviceSensors = [
+            sensorConfigs[(startIdx) % sensorConfigs.length],
+            sensorConfigs[(startIdx + 1) % sensorConfigs.length],
+            sensorConfigs[(startIdx + 2) % sensorConfigs.length],
+            sensorConfigs[(startIdx + 3) % sensorConfigs.length],
+          ];
 
           for (const config of deviceSensors) {
             const sensor = await prisma.sensor.create({
               data: {
-                name: `${config.type.replace("_", " ")} - ${zoneName}`,
+                name: `${config.type.replace(/_/g, " ")} - ${zoneName}`,
                 type: config.type,
                 unit: config.unit,
                 minValue: config.min,
