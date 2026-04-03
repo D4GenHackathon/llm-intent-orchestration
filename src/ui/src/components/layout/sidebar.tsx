@@ -13,6 +13,7 @@ import {
   BarChart3,
   Settings,
   Network,
+  Pill,
 } from "lucide-react";
 
 const navigation = [
@@ -22,6 +23,7 @@ const navigation = [
   { name: "Sensors", href: "/sensors", icon: Activity },
   { name: "Alerts", href: "/alerts", icon: Bell },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Medical Assistant", href: "/medical", icon: Pill },
   { name: "Network Management", href: "/network", icon: Network, adminOnly: true },
   { name: "Settings", href: "/settings", icon: Settings },
 ];

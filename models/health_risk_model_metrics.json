@@ -1,0 +1,49 @@
+{
+  "samples": 1000,
+  "classes": [
+    "High",
+    "Low",
+    "Medium",
+    "Normal"
+  ],
+  "training_accuracy": 0.964,
+  "cross_validation": {
+    "folds": 5,
+    "mean_accuracy": 0.96,
+    "std_accuracy": 0.0045,
+    "scores": [
+      0.955,
+      0.965,
+      0.955,
+      0.965,
+      0.96
+    ]
+  },
+  "training_confusion_matrix": [
+    [
+      272,
+      0,
+      7,
+      0
+    ],
+    [
+      0,
+      240,
+      9,
+      6
+    ],
+    [
+      0,
+      11,
+      295,
+      0
+    ],
+    [
+      0,
+      3,
+      0,
+      157
+    ]
+  ],
+  "artifact_path": "D:\\llm-intent-orchestration\\models\\health_risk_model.pkl"
+}
