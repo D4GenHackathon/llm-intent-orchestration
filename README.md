@@ -1,101 +1,107 @@
-# LLM-Based Intent Orchestration for Medical IoT Environments
+# Bio AIoT Monitor
 
-## Overview
+A real-time dashboard with chatbot for monitoring hospital  environments through IoT sensors. Track temperature, humidity, soil moisture, light levels, and CO2 across multiple hospital departments, zones, and devices â€” with configurable alert rules and analytics.
 
-Modern medical research laboratories increasingly integrate smart workspace environments with diverse IoT devices and services. However, clinicians, nurses, and researchers—typically non-IT specialists—require intuitive mechanisms to express their operational intents without manual device configuration. LLMs offer promising capabilities in reasoning, planning, and task orchestration, enabling seamless automation of data retrieval, analysis, and workflow execution. More details in [D4Gen Hackathon Presentation](https://docs.google.com/presentation/d/1dIFfxO6JmQFQiGihexDT0RxHEQ_-1zaR/edit?slide=id.p1#slide=id.p1)
+## Features
 
-![Data Auto-Collection in IOT Smart Healthcare Systems](docs/general-architecture/architecture.png)
+- **Dashboard Overview** â€” Summary cards for hospitals, devices, active alerts, and sensors with recent alert feed and live sensor grid
+- **Hospital Management** â€” CRUD for hospital's department with zone organization and detail views
+- **Device Tracking** â€” Table view of IoT devices (ESP32, Arduino Nano) with online/offline status
+- **Sensor Monitoring** â€” Real-time readings with historical chart visualization per sensor
+- **Alert System** â€” Configurable alert rules (above/below thresholds) with severity levels and acknowledgment workflow
+- **Analytics** â€” Trend charts, stats cards, date range filtering, and CSV export
+- **Authentication** â€” NextAuth credentials provider with role-based access (Admin/Viewer)
+- **Responsive Layout** â€” Sidebar navigation with mobile-friendly sheet menu
 
-## Application Scenarios
+## Tech Stack
 
-### Scenario 1: In-Hospital Clinical Decision Support
-AI-assisted diagnostic recommendations leveraging historical and real-time patient records from sensor/actuator data collection systems. Healthcare professionals retain final decision authority to validate and correct potential errors.
+- **Framework**: Next.js 16 (App Router)
+- **Database**: SQLite via Prisma 7 with Better-SQLite3 adapter
+- **Auth**: NextAuth.js 4 with credentials provider
+- **UI**: shadcn/ui + Radix UI + Tailwind CSS 4
+- **Charts**: Recharts
+- **Forms**: React Hook Form + Zod validation
 
-**Key QoS Metric:** *Reliability* — Minimal packet loss is critical to prevent misdiagnosis; moderate latency is acceptable for non-real-time consultation workflows.
-
-### Scenario 2: Real-Time Physiological Monitoring
-Wearable and implantable sensors continuously monitor vital signs (blood pressure, heart rate) with anomaly detection and immediate caregiver alerts.
-
-**Key QoS Metric:** *Ultra-low Latency* — Immediate response is essential for medical emergencies; periodic data redundancy tolerates minor packet loss.
-
-**Research Direction:** Edge-based lightweight patient prediction models running directly on sensor devices.
-
-### Scenario 3: Smart Hospital BioIOT Management 
-Camera-based monitoring systems detect resident falls, autonomous medical IOT sensors/actuators management, enhancing safety, performance, energy-awareness while reducing staff workload.
-
-**Key QoS Metrics:** *Bandwidth & Jitter* — High bandwidth ensures video quality; low jitter maintains interpretable video streams.
-
----
-
-## Quick Setup
+## Getting Started
 
 ### Prerequisites
-- Install pipx: [github.com/pypa/pipx](https://github.com/pypa/pipx)
-- Install Poetry: [python-poetry.org/docs](https://python-poetry.org/docs)
 
-### Installation
+- Node.js 20+
+- pnpm 8+
+
+### Setup
+
 ```bash
-# Verify Poetry installation
-poetry --version
-
 # Install dependencies
-poetry install --no-root
+pnpm install
 
-# Check virtual environment
-poetry env list
+# Copy environment variables
+cp .env.example .env
 
-# Activate environment (Poetry 2.x)
-source $(poetry env info --path)/bin/activate
+# Generate NextAuth key
+pnpm dlx auth secret
 
-# Or for Poetry 1.x
-poetry shell
+# Demo admin user test
+npx tsx scripts/seed-admin.ts
 
-# Install FastMCP protocol
-pip install fastmcp
+# Generate Prisma client and run migrations
+pnpm dlx prisma generate
+pnpm dlx prisma db push
 
+# Start the dev server
+pnpm dev
 ```
 
----
+Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+### Seed Data
+
+To populate the database with sample hospitals, devices, sensors, and 30 days of readings:
+
+```bash
+curl -X POST http://localhost:3000/api/seed
+```
+
+This creates:
+- 2 hospital departments with 3 zones each
+- 12 devices (ESP32 and Arduino Nano)
+- 30 sensors (temperature, humidity, light, CO2)
+- ~43,000 sensor readings (30 days at 30-minute intervals)
+- Alert rules and sample triggered alerts
+- Admin user: `admin@hospital.io` / `password123`
 
 ## Project Structure
 
 ```
-llm-intent-orchestration/
-├── src/
-│   ├── main.py              # CLI entry point in FastMCP server with menu interface
-│   ├── crew.py              # Multi-agent orchestration
-│   ├── agents/
-│   │   └── agents.py        # LLM Agent logic (Gemini LLM)
-│   └── tasks/               # Task router 
-├── configs/                 # Configuration files
-├── tests/                   # Unit tests
-├── docs/                    # Documentation
-├── tools/                   # Tools
-├── data/                    # Data
-└── .env                     # Environment variables (GEMINI_API_KEY)
+src/
+├── app/
+│   ├── (auth)/              # Login and registration pages
+│   ├── (dashboard)/         # Protected dashboard routes
+│   │   ├── alerts/          # Alert management
+│   │   ├── analytics/       # Trend charts and CSV export
+│   │   ├── devices/         # Device table view
+│   │   ├── hospitals/     # Hospital CRUD and detail views
+│   │   ├── sensors/         # Sensor monitoring and charts
+│   │   └── settings/        # User settings
+│   └── api/                 # REST API routes
+├── components/
+│   ├── alerts/              # Alert banner, table, rule form
+│   ├── analytics/           # Trend chart, stats, date picker, export
+│   ├── devices/             # Device table, form, status badge
+│   ├── hospitals/         # Hospital card and form
+│   ├── layout/              # Sidebar, header, mobile nav
+│   ├── sensors/             # Sensor card, chart, grid
+│   └── ui/                  # shadcn/ui component library
+├── lib/                     # Auth config, Prisma client, utilities
+└── types/                   # NextAuth type extensions
 ```
 
-### Running the Application
+## Data Model
 
-```bash
-# CLI Menu
-python src/main.py
+```
+Hospital department -> Zone -> Device -> Sensor -> SensorReading
+                                    -> AlertRule
+                                    -> Alert
 ```
 
----
-
-## References
-
-1. MCP SDK Integration: [modelcontextprotocol.io/docs/sdk](https://modelcontextprotocol.io/docs/sdk)
-2. CrewAI Task Automation: [docs.crewai.com/en/mcp/overview](https://docs.crewai.com/en/mcp/overview)
-3. CrewAI Tutorial: [youtu.be/sPzc6hMg7So](https://www.youtube.com/watch?v=sPzc6hMg7So)
-4. MCP Learning Resources: [youtu.be/QIOk4XZ5XNU](https://youtu.be/QIOk4XZ5XNU)
-5. CrewAI + FastMCP: [github.com/ashishpatel26/Crewai-MCP-Course](https://github.com/ashishpatel26/Crewai-MCP-Course)
-6. Integration with FastMCP via [langchain-mcp-adapters](https://github.com/langchain-ai/langchain-mcp-adapters)
-7. ONOS MCP Server (Code inspiration):[onos-mcp-server](https://github.com/MCP-Mirror/davidlin2k_onos-mcp-server)
-## Future Work
-1. Giang task
-- Edge AI deployment for resource-constrained devices [Edge AI and IoT in 2025](https://www.youtube.com/watch?v=P54zzvqnVLk&t=874s)
-
-2. Trang task 
-- Data field (data files) & LLM Agent Workflow discussion with professor Hamidi.
+Each department in hospitals contains zones, which contain devices. Devices have sensors that produce readings. Sensors can have alert rules that trigger alerts when thresholds are exceeded.

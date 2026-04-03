@@ -14,7 +14,7 @@ from crewai_tools import (
 
 class CustomAgent:
     def __init__(self, name, role):
-        # Use Google Gemini
+        # Legacy CrewAI agent LLM configuration.
         self.llm = LLM(
             model="gemini/gemini-flash-latest",
             api_key=os.getenv("GEMINI_API_KEY")
