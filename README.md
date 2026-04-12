@@ -1,107 +1,118 @@
-# Bio AIoT Monitor
+# Medical Assistant Prototype
 
-A real-time dashboard with chatbot for monitoring hospital  environments through IoT sensors. Track temperature, humidity, soil moisture, light levels, and CO2 across multiple hospital departments, zones, and devices â€” with configurable alert rules and analytics.
+A web-based medical assistant for structured drug safety support, side-effect lookup, and health risk prediction. The current system combines a chat-oriented interface with deterministic backend workflows, local medical repositories, and a pretrained risk model.
+
+![Medical Assistant Overview](docs/medical/overview.png)
 
 ## Features
 
-- **Dashboard Overview** â€” Summary cards for hospitals, devices, active alerts, and sensors with recent alert feed and live sensor grid
-- **Hospital Management** â€” CRUD for hospital's department with zone organization and detail views
-- **Device Tracking** â€” Table view of IoT devices (ESP32, Arduino Nano) with online/offline status
-- **Sensor Monitoring** â€” Real-time readings with historical chart visualization per sensor
-- **Alert System** â€” Configurable alert rules (above/below thresholds) with severity levels and acknowledgment workflow
-- **Analytics** â€” Trend charts, stats cards, date range filtering, and CSV export
-- **Authentication** â€” NextAuth credentials provider with role-based access (Admin/Viewer)
-- **Responsive Layout** â€” Sidebar navigation with mobile-friendly sheet menu
+- **Medical Chat Interface** - Natural-language interaction through the `/medical` page for medication safety and risk-related questions
+- **Drug Interaction Checking** - Pairwise medication interaction checks from structured local datasets
+- **Side-Effect Lookup** - Drug side-effect retrieval with grouped outputs such as common effects and serious warning signs
+- **Health Risk Prediction** - Risk estimation from tabular vital-sign inputs using a pretrained model
+- **Medical Concept Help** - Basic support for common clinical abbreviations and vital-sign terminology
+- **Controlled Response Flow** - Deterministic workflows are used as the primary path instead of unrestricted medical generation
+- **Fallback Rewriting** - Gemini can be used for limited fallback assistance or response rewriting when configured
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router)
-- **Database**: SQLite via Prisma 7 with Better-SQLite3 adapter
-- **Auth**: NextAuth.js 4 with credentials provider
-- **UI**: shadcn/ui + Radix UI + Tailwind CSS 4
-- **Charts**: Recharts
-- **Forms**: React Hook Form + Zod validation
+- **Frontend**: Next.js UI in `src/ui`
+- **Backend**: Persistent Python backend via `scripts/run_medical_backend.py`
+- **Routing**: Medical request routing in `src/router/medical_chat_graph.py`
+- **Schemas**: Structured request and response models in `src/schemas`
+- **Workflows**: Core medical services in `src/services`
+- **LLM Fallback**: Gemini for limited fallback and rewriting support
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 20+
-- pnpm 8+
+- Python with Poetry
+- Node.js
+- npm
 
 ### Setup
 
 ```bash
-# Install dependencies
-pnpm install
+# Install Python dependencies
+poetry install
 
-# Copy environment variables
-cp .env.example .env
-
-# Generate NextAuth key
-pnpm dlx auth secret
-
-# Demo admin user test
-npx tsx scripts/seed-admin.ts
-
-# Generate Prisma client and run migrations
-pnpm dlx prisma generate
-pnpm dlx prisma db push
-
-# Start the dev server
-pnpm dev
+# Install UI dependencies
+cd src/ui
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the app.
+Set up `src/ui/.env`:
 
-### Seed Data
+```env
+DATABASE_URL="file:./dev.db"
+NEXTAUTH_SECRET="your-secret-key-here"
+NEXTAUTH_URL="http://localhost:3000"
+MEDICAL_BACKEND_URL="http://127.0.0.1:8010"
 
-To populate the database with sample hospitals, devices, sensors, and 30 days of readings:
+GEMINI_API_KEY="your-gemini-api-key"
+GEMINI_MODEL="gemini/gemini-flash-latest"
+```
+
+Start the backend:
 
 ```bash
-curl -X POST http://localhost:3000/api/seed
+poetry run python scripts/run_medical_backend.py
 ```
 
-This creates:
-- 2 hospital departments with 3 zones each
-- 12 devices (ESP32 and Arduino Nano)
-- 30 sensors (temperature, humidity, light, CO2)
-- ~43,000 sensor readings (30 days at 30-minute intervals)
-- Alert rules and sample triggered alerts
-- Admin user: `admin@hospital.io` / `password123`
+Start the UI:
+
+```bash
+cd src/ui
+npm run dev
+```
+
+If Turbopack causes issues on Windows:
+
+```bash
+npx next dev --webpack
+```
+
+Open [http://localhost:3000/medical](http://localhost:3000/medical) to use the medical assistant.
+
+## Current Behavior
+
+The current production emphasis is on bounded, explainable workflows:
+
+- Drug interactions and side effects use structured dataset lookups
+- Health risk prediction uses a pretrained model
+- Medical concept help uses the local glossary first
+- Gemini is only used when fallback support or response rewriting is needed
+- Retrieval-augmented diagnosis support remains ongoing work and is not yet the main production workflow
 
 ## Project Structure
 
-```
+```text
 src/
-├── app/
-│   ├── (auth)/              # Login and registration pages
-│   ├── (dashboard)/         # Protected dashboard routes
-│   │   ├── alerts/          # Alert management
-│   │   ├── analytics/       # Trend charts and CSV export
-│   │   ├── devices/         # Device table view
-│   │   ├── hospitals/     # Hospital CRUD and detail views
-│   │   ├── sensors/         # Sensor monitoring and charts
-│   │   └── settings/        # User settings
-│   └── api/                 # REST API routes
-├── components/
-│   ├── alerts/              # Alert banner, table, rule form
-│   ├── analytics/           # Trend chart, stats, date picker, export
-│   ├── devices/             # Device table, form, status badge
-│   ├── hospitals/         # Hospital card and form
-│   ├── layout/              # Sidebar, header, mobile nav
-│   ├── sensors/             # Sensor card, chart, grid
-│   └── ui/                  # shadcn/ui component library
-├── lib/                     # Auth config, Prisma client, utilities
-└── types/                   # NextAuth type extensions
-```
+|-- router/
+|   `-- medical_chat_graph.py      # Medical request routing and orchestration
+|-- schemas/                       # Medical request and response schemas
+`-- services/                      # Core medical workflow logic
 
-## Data Model
+src/ui/
+`-- src/
+    `-- app/
+        `-- api/
+            `-- medical/           # Medical-facing API routes
+
+scripts/
+`-- run_medical_backend.py         # Persistent Python backend for medical workflows
 
 ```
-Hospital department -> Zone -> Device -> Sensor -> SensorReading
-                                    -> AlertRule
-                                    -> Alert
+
+## Architecture Overview
+
+The medical assistant currently follows this flow:
+
+```text
+UI (/medical) -> Medical API routes -> Python backend -> Workflow services
+                                               -> Local repositories / risk model
+                                               -> Chat-oriented response
 ```
 
-Each department in hospitals contains zones, which contain devices. Devices have sensors that produce readings. Sensors can have alert rules that trigger alerts when thresholds are exceeded.
+This design supports a controlled medical assistant rather than a general diagnostic chatbot.
