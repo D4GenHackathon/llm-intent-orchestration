@@ -1,13 +1,17 @@
 """ Simulates the Edge AI inference layer that would run ON the health sensor device"""
 import json, time, os
 import numpy as np
+import pandas as pd
 import joblib
+from sklearn.pipeline import Pipeline
 from dataclasses import dataclass, asdict
+from fastapi import FastAPI
+
 from typing import Optional
 # from sklearn.ensemble import RandomForestClassifier
-MODEL_PATH = "cloud_model.1.0.0.pkl"
-SCALER_PATH = "standard_scaler.pkl"
-METADATA_PATH = "metadata_cloud_model.json"
+MODEL_PATH = "../cloud/cloud_model.1.0.1/cloud_model.1.0.1.pkl"
+SCALER_PATH = "../cloud/cloud_model.1.0.1/standard_scaler.pkl"
+METADATA_PATH = "../cloud/cloud_model.1.0.1/metadata_cloud_model.json"
 
 @dataclass
 class SensorReading:
@@ -16,12 +20,10 @@ class SensorReading:
     device_id               : str
     respiratory_rate        : float
     oxygen_saturation       : float
-    o2_scale                : float
     systolic_bp             : float
+    # diastolic_bp             : float
     heart_rate              : float
     temperature             : float
-    consciousness           : str
-    on_oxygen               : int
     timestamp              : Optional[float] = None
 
     def __post_init__(self):
@@ -34,8 +36,7 @@ class AnomalyAlert:
     patient_id          : str
     timestamp           : float
     is_anomaly          : bool  # we alert 1 when risk is high
-    # confidence          : float
-    status              : str
+    confidence          : float
     triggered_vitals    : list
     model_version       : str
     device_id           : str
@@ -52,6 +53,10 @@ class EdgeAIInference:
             )
         self._model = joblib.load(MODEL_PATH)
         self._scaler = joblib.load(SCALER_PATH)
+        # self._model = Pipeline([
+        #     ("scaler", joblib.load(SCALER_PATH)),
+        #     ("mlp", joblib.load(MODEL_PATH))
+        # ])
         with open(METADATA_PATH) as f:
             self._meta = json.load(f)
         self._features = self._meta["feature_columns"]
@@ -60,19 +65,15 @@ class EdgeAIInference:
 
     def _engineer_features(self, r: SensorReading) -> np.ndarray:
         """Compute engineered features."""
-        conscious_map = {'A': 0, 'V': 1, 'P': 2, 'C': 3, 'U': 4}
-        conscious = conscious_map.get(r.consciousness)
         feature_map = {
             'respiratory_rate'  : r.respiratory_rate,
             'oxygen_saturation' : r.oxygen_saturation,
-            'o2_scale'          : r.o2_scale,
+            # 'diastolic blood pressure'      : r.diastolic_bp,
             'systolic_bp'       : r.systolic_bp,
             'heart_rate'        : r.heart_rate,
             'temperature'       : r.temperature,
-            'consciousness'     : conscious,
-            'on_oxygen'         : r.on_oxygen,
         }
-        return np.array([[feature_map[f] for f in self._features]])
+        return pd.DataFrame([[feature_map[f] for f in self._features]], columns=self._features)
     
     def _check_vital_breaches(self, r: SensorReading) -> list:
         """ Return list of vital names that are outside normal range."""
@@ -99,17 +100,10 @@ class EdgeAIInference:
         t0 = time.perf_counter()
         X  = self._engineer_features(reading)
         X_scaled = self._scaler.transform(X)
-        # proba = float(self._model.predict_proba(X))
-        pred = self._model.predict(X_scaled)
-        is_anom = (pred == 0)
-        if pred==0:
-            stat = "HIGH"
-        elif pred==1:
-            stat = "LOW"
-        elif pred==2:
-            stat = "MEDIUM"
-        elif pred==3:
-            stat = "NORMAL"
+        X_scaled = pd.DataFrame(X_scaled, columns=self._features)
+        proba = float(self._model.predict(X_scaled).clip(0, 1)[0])
+        pred =  (proba > 0.46)
+        is_anom = (pred == 1)
         elapsed = (time.perf_counter() - t0) * 1000
 
         breaches = self._check_vital_breaches(reading)
@@ -118,31 +112,48 @@ class EdgeAIInference:
             patient_id=reading.patient_id,
             timestamp=reading.timestamp,
             is_anomaly=is_anom,
-            # confidence= round(proba,4),
+            confidence= round(proba,4),
             triggered_vitals= breaches,
             model_version   = self._version,
             device_id= reading.device_id,
-            status=stat
         )
 
         anom = "ANOMALY" if is_anom else "Normal "
+        # Later put on debug log 
+        print(f"Probability: {proba}")
         print(f"[EdgeAI] {anom} | patient={reading.patient_id} | {elapsed:.2f}ms")
         return alert
     def to_dict(self, alert: AnomalyAlert) -> dict:
         return asdict(alert)
     
-if __name__ == "__main__":
-    engine = EdgeAIInference()
-    print(f"\nModel loaded.")
 
-    test_cases = [
-        SensorReading(patient_id="P-001", device_id="esp-01",respiratory_rate=18, oxygen_saturation=98,
-                      o2_scale=1, systolic_bp=100, heart_rate=90,
-                      temperature=37.0, consciousness="A", on_oxygen=0),
-    ]
+# if __name__ == "__main__":
+#     engine = EdgeAIInference()
+#     print(f"\nModel loaded.")
 
-    print("\n── Running test cases ──")
-    for r in test_cases:
-        alert = engine.predict(r)
-        if alert.is_anomaly:
-            print(f"  Triggers: {alert.triggered_vitals}\n")
+#     test_cases = [
+#         SensorReading(patient_id="P-001", device_id="esp-01",respiratory_rate=28, oxygen_saturation=92, systolic_bp=116, heart_rate=151,
+#                       temperature=38.5,),
+#         SensorReading(patient_id="P-002", device_id="esp-02",respiratory_rate=15, oxygen_saturation=98.508265, systolic_bp=131, heart_rate=63,
+#                       temperature=37.052049,),
+#         SensorReading(patient_id="P-003", device_id="esp-03",respiratory_rate=30, oxygen_saturation=98.508265, systolic_bp=150, heart_rate=15,
+#         temperature=42.0,)
+#     ]
+#     print("\n── Running test cases ──")
+#     for r in test_cases:
+#         alert = engine.predict(r)
+#         if alert.is_anomaly:
+#             print(f"  Triggers: {alert.triggered_vitals}\n")
+
+app = FastAPI()
+engine = EdgeAIInference()
+print("Model loaded.")
+@app.post("/predict")
+def predict(reading: SensorReading):
+    alert = engine.predict(reading)
+
+    return {
+        "patient_id": reading.patient_id,
+        "is_anomaly": alert.is_anomaly,
+        "triggered_vitals": alert.triggered_vitals,
+    }

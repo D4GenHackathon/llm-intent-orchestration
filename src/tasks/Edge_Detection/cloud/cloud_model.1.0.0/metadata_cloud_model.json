@@ -1,15 +1,13 @@
 {
   "model_version": "1.0.0",
-  "model_type": "RandomForestClassifier",
+  "model_type": "MLPRegressor",
   "feature_columns": [
-    "respiratory_rate",
-    "oxygen_saturation",
-    "o2_scale",
-    "systolic_bp",
-    "heart_rate",
-    "temperature",
-    "consciousness",
-    "on_oxygen"
+    "heart rate",
+    "respiratory rate",
+    "body temperature",
+    "oxygen saturation",
+    "systolic blood pressure",
+    "diastolic blood pressure"
   ],
   "target_column": "anomaly",
   "normal_ranges": {
@@ -35,10 +33,10 @@
     }
   },
   "performance": {
-    "roc_auc": 0.9974,
-    "f1_score": 0.9627,
-    "cv_f1_mean": 0.9695,
-    "cv_f1_std": 0.0101
+    "roc_auc": 0.7182,
+    "f1_score": 0.6188,
+    "cv_f1_mean": 0.6009,
+    "cv_f1_std": 0.0026
   },
   "edge_deployment": {
     "target_device": " esp32",
