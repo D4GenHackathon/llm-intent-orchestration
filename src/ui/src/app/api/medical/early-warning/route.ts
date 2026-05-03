@@ -12,7 +12,17 @@ import {
 export const runtime = "nodejs";
 
 const requestSchema = z.object({
-  query: z.string().min(1),
+  patient_id: z.union([z.string(), z.number()]).optional(),
+  patientId: z.union([z.string(), z.number()]).optional(),
+  timestamp: z.string().min(1),
+  temperature: z.number().optional(),
+  heartRate: z.number().optional(),
+  heart_rate: z.number().optional(),
+  fallDetected: z.boolean().optional(),
+  fall_detected: z.boolean().optional(),
+  age: z.number().optional(),
+  gender: z.string().optional(),
+  topK: z.number().int().positive().optional(),
 });
 
 export async function POST(request: Request) {
@@ -20,15 +30,15 @@ export async function POST(request: Request) {
     const body = await request.json();
     const data = requestSchema.parse(body);
     await ensureMedicalBackendRunning();
-    const backendResponse = await callMedicalBackend("/medical/chat", data);
+    const backendResponse = await callMedicalBackend<{ success?: boolean }>("/medical/early-warning", data);
     if (backendResponse) {
-      return NextResponse.json(backendResponse, { status: 200 });
+      return NextResponse.json(backendResponse, { status: backendResponse.success ? 200 : 400 });
     }
 
-    const scriptPath = resolveBridgeScript("run_medical_chat.py");
+    const scriptPath = resolveBridgeScript("run_early_warning.py");
 
     if (!scriptPath) {
-      return NextResponse.json({ error: "Medical chat bridge script was not found." }, { status: 500 });
+      return NextResponse.json({ error: "Early-warning bridge script was not found." }, { status: 500 });
     }
 
     const projectRoot = path.dirname(path.dirname(scriptPath));
@@ -46,12 +56,12 @@ export async function POST(request: Request) {
     const parsed = JSON.parse(result.stdout || "{}");
     if (result.status !== 0) {
       return NextResponse.json(
-        { error: parsed.error || "Python medical chat workflow failed." },
+        { error: parsed.error || "Python early-warning workflow failed." },
         { status: 500 }
       );
     }
 
-    return NextResponse.json(parsed, { status: 200 });
+    return NextResponse.json(parsed, { status: parsed.success ? 200 : 400 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 });
