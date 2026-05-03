@@ -42,10 +42,6 @@ class MedicalBackendHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            if self.path == "/medical/chat":
-                response = SERVICE.handle_chat(payload)
-                self._write_json(HTTPStatus.OK, response)
-                return
             if self.path == "/medical/drug-interactions":
                 response = SERVICE.handle_drug_interactions(payload)
                 self._write_json(HTTPStatus.OK if response.get("success") else HTTPStatus.BAD_REQUEST, response)
@@ -56,6 +52,14 @@ class MedicalBackendHandler(BaseHTTPRequestHandler):
                 return
             if self.path == "/medical/health-risk":
                 response = SERVICE.handle_health_risk(payload)
+                self._write_json(HTTPStatus.OK if response.get("success") else HTTPStatus.BAD_REQUEST, response)
+                return
+            if self.path == "/medical/early-warning":
+                response = SERVICE.handle_early_warning(payload)
+                self._write_json(HTTPStatus.OK if response.get("success") else HTTPStatus.BAD_REQUEST, response)
+                return
+            if self.path == "/medical/prescription-safety":
+                response = SERVICE.handle_prescription_safety(payload)
                 self._write_json(HTTPStatus.OK if response.get("success") else HTTPStatus.BAD_REQUEST, response)
                 return
         except Exception as exc:  # pragma: no cover - runtime safety

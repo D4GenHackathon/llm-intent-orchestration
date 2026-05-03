@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Iterable, List, Optional
 
 from repositories.interaction_repository import InteractionRecord, InteractionRepository
@@ -27,11 +28,23 @@ class InteractionService:
 
     def check_interactions(self, request: DrugInteractionRequest) -> WorkflowResponse:
         """Run the MVP drug interaction workflow."""
+        submitted_terms = self._submitted_terms(request.drugs, request.query)
         normalized_drugs = self._resolve_drugs(request.drugs, request.query)
+        unrecognized_terms = self._unrecognized_terms(submitted_terms, normalized_drugs)
         if len(normalized_drugs) < 2:
+            message = self._minimum_drug_message(normalized_drugs, unrecognized_terms)
             return WorkflowResponse(
                 success=False,
-                message="At least two recognizable drugs are required for interaction checking.",
+                message=message,
+                data={
+                    "result": {
+                        "normalized_drugs": normalized_drugs,
+                        "unrecognized_terms": unrecognized_terms,
+                        "interacting_pairs": [],
+                        "interaction_found": False,
+                        "explanation": message,
+                    }
+                },
                 warnings=["No interaction lookup was performed."],
             )
 
@@ -45,14 +58,78 @@ class InteractionService:
             interacting_pairs=interacting_pairs,
             interaction_found=found,
             explanation=explanation,
+            unrecognized_terms=unrecognized_terms,
         )
         return WorkflowResponse(success=True, message="Drug interaction workflow completed.", data={"result": payload})
 
     def _resolve_drugs(self, explicit_drugs: Iterable[str], query: str) -> List[str]:
         known_names = self.repository.get_known_drug_names()
         if explicit_drugs:
-            return self.normalization_service.normalize_many(explicit_drugs, known_names=known_names)
+            return self._resolve_submitted_terms(list(explicit_drugs), known_names)
         return self.normalization_service.extract_drug_names(query, known_names)
+
+    def _resolve_submitted_terms(self, terms: Iterable[str], known_names: List[str]) -> List[str]:
+        known_normalized = {self.normalization_service.normalize_drug_name(name) for name in known_names}
+        resolved_drugs: List[str] = []
+        seen = set()
+        for term in terms:
+            normalized = self.normalization_service.normalize_drug_name(str(term), known_names=known_names)
+            if normalized in known_normalized and normalized not in seen:
+                seen.add(normalized)
+                resolved_drugs.append(normalized)
+        return resolved_drugs
+
+    def _submitted_terms(self, explicit_drugs: Iterable[str], query: str) -> List[str]:
+        if explicit_drugs:
+            raw_terms = list(explicit_drugs)
+        else:
+            cleaned_query = re.sub(
+                r"\b(check|interaction|interactions|interact|interacts|with|does|do|between|and|please)\b",
+                ",",
+                query,
+                flags=re.IGNORECASE,
+            )
+            raw_terms = re.split(r",|\n|;|\+|/", cleaned_query)
+        terms: List[str] = []
+        seen = set()
+        for term in raw_terms:
+            normalized = " ".join(str(term).strip(" ?.!\t\r").split())
+            if not normalized:
+                continue
+            key = normalized.casefold()
+            if key not in seen:
+                seen.add(key)
+                terms.append(normalized)
+        return terms
+
+    def _unrecognized_terms(self, submitted_terms: List[str], normalized_drugs: List[str]) -> List[str]:
+        if not submitted_terms:
+            return []
+        unrecognized: List[str] = []
+        known_names = self.repository.get_known_drug_names()
+        known_normalized = {self.normalization_service.normalize_drug_name(name) for name in known_names}
+        for term in submitted_terms:
+            normalized = self.normalization_service.normalize_drug_name(term, known_names=known_names)
+            if not normalized or normalized not in known_normalized or normalized not in normalized_drugs:
+                unrecognized.append(term)
+        return unrecognized
+
+    def _minimum_drug_message(self, normalized_drugs: List[str], unrecognized_terms: List[str]) -> str:
+        if not normalized_drugs:
+            if unrecognized_terms:
+                return (
+                    "No recognizable medications were found. Please check spelling or try generic drug names. "
+                    f"Unrecognized: {', '.join(unrecognized_terms)}."
+                )
+            return "No recognizable medications were found. Please enter at least two medication names."
+
+        message = (
+            f"Only one medication was recognized: {normalized_drugs[0]}. "
+            "Interaction checking requires at least two recognized medications."
+        )
+        if unrecognized_terms:
+            message += f" Unrecognized: {', '.join(unrecognized_terms)}."
+        return message
 
     def _build_pair_results(
         self,
@@ -121,11 +198,10 @@ class InteractionService:
     ) -> str:
         if not interacting_pairs:
             return (
-                f"Checked {len(checked_pairs)} pairwise combinations across {len(normalized_drugs)} normalized drugs. "
-                "No structured interaction record was found in the current database extract."
+                "No interaction was found for the submitted medication list in the current structured dataset."
             )
 
         return (
-            f"Found {len(interacting_pairs)} interacting pair(s) across {len(normalized_drugs)} normalized drugs. "
-            "Only pairs with structured matches are returned below, along with the database-backed explanation for each pair."
+            f"{len(interacting_pairs)} potential interaction"
+            f"{'s were' if len(interacting_pairs) != 1 else ' was'} found."
         )

@@ -36,3 +36,4 @@ class DrugInteractionResponse:
     interacting_pairs: List[PairwiseInteraction]
     interaction_found: bool
     explanation: str
+    unrecognized_terms: List[str] = field(default_factory=list)
