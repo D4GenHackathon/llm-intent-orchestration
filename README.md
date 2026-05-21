@@ -2,7 +2,7 @@
 
 ## Overview
 
-Modern medical research laboratories increasingly integrate smart workspace environments with diverse IoT devices and services. However, clinicians, nurses, and researchers—typically non-IT specialists—require intuitive mechanisms to express their operational intents without manual device configuration. LLMs offer promising capabilities in reasoning, planning, and task orchestration, enabling seamless automation of data retrieval, analysis, and workflow execution. More details in [D4Gen Hackathon Presentation](https://docs.google.com/presentation/d/1dIFfxO6JmQFQiGihexDT0RxHEQ_-1zaR/edit?slide=id.p1#slide=id.p1)
+Modern medical research laboratories increasingly integrate smart workspace environments with diverse IoT devices and services. However, clinicians, nurses, and researchers—typically non-IT specialists—require intuitive mechanisms to express their operational intents without manual device configuration. LLMs offer promising capabilities in reasoning, planning, and task orchestration, enabling seamless automation of data retrieval, analysis, and workflow execution. This repository represent the within-institutional management of medical IOT devices to build the complete secure and automated smart environment for the solution presented in our work for [D4Gen Hackathon Presentation](https://docs.google.com/presentation/d/1dIFfxO6JmQFQiGihexDT0RxHEQ_-1zaR/edit?slide=id.p1#slide=id.p1).
 
 ![Data Auto-Collection in IOT Smart Healthcare Systems](docs/general-architecture/architecture.png)
 
@@ -11,19 +11,16 @@ Modern medical research laboratories increasingly integrate smart workspace envi
 ### Scenario 1: In-Hospital Clinical Decision Support
 AI-assisted diagnostic recommendations leveraging historical and real-time patient records from sensor/actuator data collection systems. Healthcare professionals retain final decision authority to validate and correct potential errors.
 
-**Key QoS Metric:** *Reliability* — Minimal packet loss is critical to prevent misdiagnosis; moderate latency is acceptable for non-real-time consultation workflows.
-
-### Scenario 2: Real-Time Physiological Monitoring
-Wearable and implantable sensors continuously monitor vital signs (blood pressure, heart rate) with anomaly detection and immediate caregiver alerts.
-
-**Key QoS Metric:** *Ultra-low Latency* — Immediate response is essential for medical emergencies; periodic data redundancy tolerates minor packet loss.
-
-**Research Direction:** Edge-based lightweight patient prediction models running directly on sensor devices.
-
-### Scenario 3: Smart Hospital BioIOT Management 
+### Scenario 2: Smart Hospital BioIOT Management 
 Camera-based monitoring systems detect resident falls, autonomous medical IOT sensors/actuators management, enhancing safety, performance, energy-awareness while reducing staff workload.
 
-**Key QoS Metrics:** *Bandwidth & Jitter* — High bandwidth ensures video quality; low jitter maintains interpretable video streams.
+## Product Prototype Version
+
+| Version | Type | Features | Scenario| Video Demo |
+|---|---|---|---|---|
+| Alpha v1.0.1 | Initial Alpha | Application interface, dashboard functionality| Scenario 2 | [▶ Basic Function View](docs/demo/alpha101.webm) | 
+| Alpha v1.0.2 | Alpha Update | RAG model for medication prediction | Scenario 1 | [▶ Network Function Demo View](docs/demo/alpha102.webm) | 
+| Alpha v1.0.3 | Alpha Update | Full web application functionalities | All scenarios |Upcomming (Hackathon Day) | 
 
 ---
 
