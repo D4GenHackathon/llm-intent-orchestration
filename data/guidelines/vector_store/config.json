@@ -1,0 +1,10 @@
+{
+  "backend": "tfidf",
+  "model_name": "sklearn.feature_extraction.text.TfidfVectorizer",
+  "vectorizer_path": "vectorizer.pkl",
+  "chunks_path": "data/guidelines/guideline_chunks.jsonl",
+  "embeddings_path": "embeddings.npy",
+  "metadata_path": "metadata.jsonl",
+  "embedding_dim": 20000,
+  "chunk_count": 134
+}

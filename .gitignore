@@ -1,3 +1,20 @@
 .env
 .poetry.lock
+.venv/
+.tmp/
 __pycache__/
+.DS_Store
+*.pyc
+*.log
+*.aux
+*.out
+*.toc
+*.synctex.gz
+tmp_medical_backend*.log
+backend*.log
+curl
+Invoke-RestMethod
+docs/Medical_assistant_summary/main1.pdf
+docs/medical/medical_assistant_figure1.drawio
+docs/D4GEN Hackathon - Version 1 (General) (1).pptx
+src/ui/scripts/D4GEN Hackathon - Version 1 (General) (1).pptx

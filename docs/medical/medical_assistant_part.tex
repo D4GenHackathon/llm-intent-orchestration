@@ -1,0 +1,201 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\makeatletter
+
+\textheight 25.0cm
+\topmargin -21mm
+\textwidth 17.5cm
+\oddsidemargin -5mm
+\evensidemargin \oddsidemargin
+\pagestyle{empty}
+\headsep 13mm
+
+\def\*{{}$^\ast$}
+\def\ps@headings{%
+      \let\@oddfoot\@empty\let\@evenfoot\@empty
+      \def\@evenhead{\@empty}%
+      \let\@mkboth\markboth}
+\newcommand\mlarge{\@setfontsize\mlarge\@xipt{13.6}}
+\def\title#1{\def\@title{#1}}
+\def\authors#1{\def\@authors{#1}}
+\def\affiliations#1{\def\@affiliations{#1}}
+\def\author{\authors}
+\def\affiliation{\affiliations}
+\def\maketitle{\thispagestyle{headings}\begin{center}
+{\mlarge\textbf{\MakeUppercase{\@title}}}\\[13pt]
+{\mlarge\@authors}\\
+{\mlarge\textit{\@affiliations}}\end{center}}
+
+\newenvironment{summary}
+{\small\underline{\textit{Summary}}\ \ }{}
+
+\setcounter{secnumdepth}{0}
+
+\renewcommand\section{\@startsection {section}{1}{\z@}%
+                                   {-\baselineskip}%
+                                   {\baselineskip}%
+                                   {\centering\normalfont\normalsize\bfseries}{\uppercase}}
+\renewcommand\subsection{\@startsection {section}{1}{\z@}%
+                                   {-\baselineskip}%
+                                   {1pt}%
+                                   {\normalfont\normalsize\bfseries}{}}
+\renewcommand\subsubsection{\@startsection {section}{1}{\z@}%
+                                   {-\baselineskip}%
+                                   {1pt}%
+                                   {\normalfont\normalsize\itshape}{}}
+\renewcommand\paragraph{\subsubsection}
+
+\def\@startsection#1#2#3#4#5#6#7{%
+  \if@noskipsec \leavevmode \fi
+  \par
+  \@tempskipa #4\relax
+  \ifdim \@tempskipa <\z@
+    \@tempskipa -\@tempskipa \@afterindentfalse
+  \fi
+  \if@nobreak
+    \everypar{}%
+  \else
+    \addpenalty\@secpenalty\addvspace\@tempskipa
+  \fi
+  \@ifstar
+    {\@ssect{#3}{#4}{#5}{#6}{#7}}%
+    {\@dblarg{\@sect{#1}{#2}{#3}{#4}{#5}{#6}{#7}}}}
+
+\def\@sect#1#2#3#4#5#6#7[#8]#9{%
+  \ifnum #2>\c@secnumdepth
+    \let\@svsec\@empty
+  \else
+    \refstepcounter{#1}%
+    \protected@edef\@svsec{\@seccntformat{#1}\relax}%
+  \fi
+  \@tempskipa #5\relax
+  \ifdim \@tempskipa>\z@
+    \begingroup
+      #6 \hskip #3\relax\@svsec\interlinepenalty \@M #7{#9}\@@par
+    \endgroup
+  \else
+    \def\@svsechd{%
+      #6{\hskip #3\relax
+      \@svsec #7{#9}}%
+    }%
+  \fi
+  \@xsect{#5}}
+
+\def\@ssect#1#2#3#4#5#6{%
+  \@tempskipa #3\relax
+  \ifdim \@tempskipa>\z@
+    \begingroup
+      #4 \hskip #1\interlinepenalty \@M #5{#6}\@@par
+    \endgroup
+  \else
+    \def\@svsechd{#4{\hskip #1\relax #5}}%
+  \fi
+  \@xsect{#3}}
+
+\long\def\@makecaption#1#2{%
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{{\small\textbf{#1.} #2}}%
+  \ifdim \wd\@tempboxa >\hsize
+    {\small\textbf{#1.} #2}\par
+  \else
+    \global \@minipagefalse
+    \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip\belowcaptionskip}
+
+\def\thebibliography#1{\subsection*{References}\vskip13pt\footnotesize\list
+  {\@biblabel{\arabic{enumiv}}}{\settowidth\labelwidth{\@biblabel{#1}}%
+    \parsep0pt\itemsep0pt plus 1pt\labelsep1mm\leftmargin7mm\labelwidth6mm
+    \usecounter{enumiv}%
+    \let\p@enumiv\@empty
+    \def\theenumiv{\arabic{enumiv}}}%
+    \def\newblock{\hskip .11em plus.33em minus.07em}%
+    \sloppy\clubpenalty4000\widowpenalty4000
+    \sfcode`\.=1000\relax}
+
+\def\endthebibliography{%
+  \def\@noitemerr{\@warning{Empty `thebibliography' environment}}%
+  \endlist}
+
+\parindent 0pt
+\parskip 1pt plus 0.2pt
+\setlist[itemize]{leftmargin=1.2em, topsep=0.2em, itemsep=0.2em}
+\hypersetup{colorlinks=true, urlcolor=blue}
+
+\makeatother
+
+\title{Medical Assistant Workflows for Clinical Monitoring, Drug Safety, and Health Risk Support}
+\authors{Phuc-Khanh-Nhi NGUYEN$^{1,\ast}$}
+\affiliations{$^1$Universit\'e d'\'Evry Paris-Saclay, \'Evry-Courcouronnes, \^Ile-de-France, France.\\Author e-mail: phuckhanhnhi.nguyen@etud.univ-evry.fr}
+
+\begin{document}
+\maketitle
+
+\begin{summary}
+Modern clinical software increasingly needs to support medication safety, vital-sign interpretation, and patient-specific review without forcing users to interact directly with fragmented datasets or backend tools. This work presents a structured medical assistant prototype integrated into a Next.js dashboard and a persistent Python backend. The current system is organized into two workflow groups: clinical monitoring and medication safety. Clinical monitoring includes early-warning alerts, which retrieve sensor records by patient and timestamp, enrich them with health-record context, detect abnormal patterns, retrieve relevant guideline chunks, and generate source-backed alerts. It also includes health-risk prediction from a complete vital-sign profile using a trained tabular model. Medication safety includes drug interaction checking, side-effect lookup, and patient-specific prescription review. Rather than relying on unrestricted medical generation, the system uses explicit task-based workflows grounded in local datasets, trained model artifacts, and guideline retrieval.
+\end{summary}
+
+\section*{Problem Context and Related Work}
+Clinical teams and healthcare learners often need rapid support for medication safety questions, side-effect monitoring, early warning, and the interpretation of patient risk indicators. In practice, these tasks are still frequently handled by consulting separate references, static documents, spreadsheets, or isolated prediction scripts. This makes the workflow fragmented and can obscure where a recommendation or warning came from.
+
+AI-enabled clinical systems can make medical software easier to use, but unrestricted generation is not appropriate for safety-sensitive workflows where traceability and consistency matter. The aim of this prototype is therefore not to replace clinical judgment or provide autonomous diagnosis. Instead, it provides practical decision support through bounded workflows that use structured data, local retrieval, and trained model outputs. This positioning is consistent with prior work on clinical decision support, predictive risk modeling, and medication-focused support systems~\cite{sutton2020,wang2022,muylle2021}. Taken together, these references motivate the design choice of combining a usable dashboard with auditable backend services.
+
+\section*{Current System Architecture and Implementation}
+The implemented system is organized as a lightweight application stack with a medical dashboard front end, API routes, a persistent Python backend, and workflow-specific services. The web interface provides the main \texttt{/medical} experience and is organized into two groups: clinical monitoring and medication safety. Requests are routed through application endpoints to a backend process that dispatches them across specialized services.
+
+At the workflow layer, five capabilities are currently implemented:
+\begin{itemize}
+\item \textbf{Early warning.} The user provides a patient identifier and timestamp. The backend retrieves temperature, heart rate, and fall-detection status from the local patient-vitals table, enriches the record with health history, detects abnormal sensor patterns with explicit rules, retrieves relevant guideline chunks from the local vector store, and returns an alert with explanation and citations.
+\item \textbf{Health risk prediction.} A pretrained logistic-regression model consumes tabular vital-sign features such as respiratory rate, oxygen saturation, systolic blood pressure, heart rate, temperature, consciousness, and oxygen support status. The workflow returns a predicted risk class, confidence score, and top contributing features to support interpretation.
+\item \textbf{Drug interaction checking.} Medication names are normalized, pairwise combinations are generated, and interactions are looked up from a structured local dataset. The system returns dataset-backed interaction pairs when available and handles unrecognized or partially recognized medication lists explicitly.
+\item \textbf{Drug side-effect lookup.} One or more normalized medication names are used to retrieve structured side-effect entries from a local repository. Results are displayed separately per medication so that multi-drug queries remain easy to inspect.
+\item \textbf{Patient-specific prescription check.} A patient identifier and medication list are submitted together. The backend retrieves the patient's health record and checks each medication against patient-history safety rules, such as warnings for medications that may worsen known conditions.
+\end{itemize}
+
+The design uses explicit task-based workflows rather than an unstructured request flow. Medication safety tasks are dataset-backed, health-risk prediction uses a trained model artifact, and early-warning alerts combine sensor rules with guideline retrieval. An optional Gemini-based component can improve early-warning alert wording, but the core workflows continue to run with local datasets, the trained model, and retrieved guideline context.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.90\linewidth]{overview.png}
+\caption{Architecture of the current medical assistant prototype, including clinical monitoring, medication-safety workflows, local datasets, trained risk prediction, and guideline retrieval for early-warning alerts.}
+\label{fig:overview}
+\end{figure}
+
+\section*{Preliminary Capabilities and Observations}
+The current prototype demonstrates that a medical assistant can combine a single dashboard with bounded medical workflows without requiring fully generative reasoning at every step. Early-warning support shows how sensor records, health history, rule-based abnormality detection, and guideline retrieval can be combined into a source-backed alert. Health risk prediction extends the system beyond pure lookup by introducing a pretrained classifier that converts vital-sign profiles into risk categories with basic explanation support.
+
+The medication-safety workflows remain deliberately database-first. Drug interaction checking improves reproducibility by tying results to explicit structured records. Side-effect lookup keeps each medication's output separate, which is important when users submit multiple drugs. Patient-specific prescription review adds a patient-context layer by checking new prescriptions against the retrieved health record. From a systems perspective, this mixed architecture allows a shared interface for several medical tasks while preserving specialized processing logic for each task class. It also reduces the pressure to rely on a generative model as the sole source of medical truth.
+
+
+
+\section*{Guideline Retrieval and Alert Generation}
+The guideline retrieval pipeline prepares PDF guidelines by extracting text, chunking the content, attaching metadata, and building a local vector store. During early-warning execution, the generated clinical query is embedded and matched against the stored guideline chunks. The retrieved passages are then used as context for the final alert, allowing the output to include source citations rather than relying only on generic model knowledge.
+
+This RAG component is currently used for early-warning alerts, not free-form diagnosis. The system is therefore best understood as a guideline-backed alerting prototype with medication-safety and risk-prediction modules. This boundary is important: the workflow can support review and escalation, but it is not designed to make autonomous clinical decisions.
+
+\section*{Conclusions}
+This work presents the current state of a medical assistant prototype that combines a dashboard interface with structured backend workflows for clinical monitoring and medication safety. The implemented architecture demonstrates that it is feasible to integrate local repositories, patient-history lookup, sensor records, guideline retrieval, and a pretrained tabular risk model within a single assistant-oriented system. The present contribution lies less in unrestricted generation and more in the careful orchestration of bounded medical tasks through clear workflow-specific interfaces.
+
+The current production emphasis remains on deterministic data-backed workflows, guideline-backed early-warning alerts, and explainable model outputs. Future work can broaden the guideline corpus, improve patient-history representation, and evaluate alert quality with clinical review.
+
+
+\begin{thebibliography}{3}
+\bibitem{sutton2020}
+Sutton, R. T., Pincock, D., Baumgart, D. C., Sadowski, D. C., Fedorak, R. N., and Kroeker, K. I. An overview of clinical decision support systems: benefits, risks, and strategies for success. \textit{npj Digital Medicine}, 3, Article 17, 2020. DOI: \url{https://doi.org/10.1038/s41746-020-0221-y}.
+
+\bibitem{wang2022}
+Wang, Z., Nian, X., and Sun, J. Integrated Convolutional and Recurrent Neural Networks for Health Risk Prediction using Patient Journey Data with Many Missing Values. \textit{arXiv preprint} arXiv:2211.06045, 2022. URL: \url{https://arxiv.org/abs/2211.06045}.
+
+\bibitem{muylle2021}
+Muylle, K. M., Gentens, K., Dupont, A. G., and Cornu, P. Evaluation of an optimized context-aware clinical decision support system for drug-drug interaction screening. \textit{International Journal of Medical Informatics}, 152, 104393, 2021. DOI: \url{https://doi.org/10.1016/j.ijmedinf.2021.104393}.
+\end{thebibliography}
+
+\end{document}
