@@ -7,8 +7,8 @@ from typing import Any
 
 from crewai import LLM
 
-from repositories.patient_history_repository import PatientHistoryRepository
-from repositories.patient_vitals_repository import PatientVitalsRepository
+from repositories.patient_history import PatientHistoryRepository
+from repositories.patient_vitals import PatientVitalsRepository
 from schemas.response import WorkflowResponse
 from services.guideline_vector_store import GuidelineVectorStore
 from services.runtime_env import load_medical_environment

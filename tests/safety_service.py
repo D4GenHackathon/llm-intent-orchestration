@@ -6,7 +6,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from repositories.side_effect_repository import SideEffectRecord
+from repositories.side_effect import SideEffectRecord
 from services.prescription_safety_service import PrescriptionSafetyService
 
 

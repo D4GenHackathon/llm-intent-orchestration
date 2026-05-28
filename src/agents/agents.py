@@ -3,6 +3,8 @@ Agents module for managing different types of agents within the system.
 - Define Crew Captain who orients other agents towards the autonomated orchestration goal of IOT device deployment in Software-Defined Networks (SDN) control.
     including security & credentials monitoring, deployment monitoring, plan validation, network auto-configuration, and device orchestration.
 """
+from __future__ import annotations
+
 import os
 from dotenv import load_dotenv
 from textwrap import dedent
@@ -57,24 +59,39 @@ class CustomAgent:
             allow_delegation=False,
         )
 
-    # 4.2 Define Diagnosis LLM Agent for doctor's diagnosis support (Data tools using registered network tools for patient history, data from IOT devices in the deployment monitoring)
-    def diagnosis_support(self):
-        diagnosis_prompt = self._load_prompt("diagnosis_support_prompt.txt")
+    # 4.2 Define Diagnosis LLM Agent for doctor's diagnosis support 
+    def drug_safety_agent(self) -> Agent:
+        """Agent for explaining deterministic drug-safety results."""
         return Agent(
-            role="Diagnosis Support Agent",
-            backstory=diagnosis_prompt
-            if diagnosis_prompt
-            else dedent(
-                """Supports doctors in diagnosing patient conditions based on data from IOT devices and patient history."""
+            role="Drug Safety Workflow Agent",
+            backstory=dedent(
+                """Supports deterministic drug-safety workflows while deferring medical facts to structured data sources."""
             ),
             goal=dedent(
                 """
-            Provide support to doctors in diagnosing patient conditions by analyzing data from IOT devices in the fall detection scenario to know about patient conditions and patient history,
-            include generating recommendations for diagnosis and relevant medical actions step by step with explanations, and report any issues for further action."""
+                Help route drug interaction and side-effect requests, but do not invent medical facts.
+                Prefer normalized inputs, structured lookups, and user-friendly summaries of database results.
+                """
             ),
             verbose=True,
             llm=self.llm,
-            allow_delegation=False,
+        )
+
+    def health_risk_agent(self) -> Agent:
+        """Agent for summarizing structured risk prediction outputs."""
+        return Agent(
+            role="Health Risk Workflow Agent",
+            backstory=dedent(
+                """Summarizes dataset-based health risk predictions and evidence for triage-oriented workflows."""
+            ),
+            goal=dedent(
+                """
+                Help present model outputs, similar-case evidence, and feature-based explanations without using the
+                dataset as a generic medical knowledge base.
+                """
+            ),
+            verbose=True,
+            llm=self.llm,
         )
 
     # 4.3 Define network management agent

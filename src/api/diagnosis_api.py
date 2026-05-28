@@ -1,57 +1,18 @@
 """Diagnosis Support API endpoints."""
 
 # Endpoints available:
-# - POST /api/diagnosis/support
-# - GET /api/diagnosis/status/{task_id}
+# - POST /api/medical/drug-interactions
+# - POST /api/medical/side-effects
+# - POST /api/medical/health-risk
+# - POST /api/medical/early-warning
+# - POST /api/medical/prescription-safety
+# - GET /api/health
 
 from . import *
-
-@app.post("/api/diagnosis/support")
-async def run_diagnosis_support(background_tasks: BackgroundTasks):
-    """Run diagnosis support agent."""
-    task_id = str(uuid.uuid4())
-    
-    def run_diagnosis():
-        try:
-            result = crew_instance.run_diagnosis()
-            active_tasks[task_id] = {
-                "status": "completed",
-                "result": result,
-                "error": None
-            }
-        except Exception as e:
-            active_tasks[task_id] = {
-                "status": "failed",
-                "result": None,
-                "error": str(e)
-            }
-    
-    background_tasks.add_task(run_diagnosis)
-    active_tasks[task_id] = {
-        "status": "processing",
-        "result": None,
-        "error": None
-    }
-    
-    return {
-        "task_id": task_id,
-        "status": "processing",
-        "message": "Diagnosis support running..."
-    }
-
-@app.get("/api/diagnosis/status/{task_id}")
-async def get_diagnosis_status(task_id: str):
-    """Get diagnosis support task status."""
-    if task_id not in active_tasks:
-        return {"error": "Task not found"}
-    
-    task = active_tasks[task_id]
-    return {
-        "task_id": task_id,
-        "status": task["status"],
-        "result": task["result"],
-        "error": task["error"]
-    }
+from services.medical_backend_service import MedicalBackendService
+from schemas.interaction import DrugInteractionRequest
+from schemas.side_effect import SideEffectLookupRequest
+from schemas.risk import HealthRiskInput
 
 # Run all agents
 @app.post("/api/agents/run-all")
@@ -100,6 +61,97 @@ async def get_all_agents_status(task_id: str):
         "result": task["result"],
         "error": task["error"]
     }
+
+
+# Medical Backend Endpoints
+medical_service = None
+
+def get_medical_service():
+    """Get or initialize the medical backend service."""
+    global medical_service
+    if medical_service is None:
+        medical_service = MedicalBackendService()
+    return medical_service
+
+
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint."""
+    return {
+        "status": "ok",
+        "service": "IoT Orchestration API with Medical Backend"
+    }
+
+
+@app.post("/api/medical/drug-interactions")
+async def check_drug_interactions(payload: dict):
+    """Check for drug interactions."""
+    try:
+        service = get_medical_service()
+        response = service.handle_drug_interactions(payload)
+        return response
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.post("/api/medical/side-effects")
+async def lookup_side_effects(payload: dict):
+    """Lookup drug side effects."""
+    try:
+        service = get_medical_service()
+        response = service.handle_side_effects(payload)
+        return response
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.post("/api/medical/health-risk")
+async def predict_health_risk(payload: dict):
+    """Predict health risk based on vital signs."""
+    try:
+        service = get_medical_service()
+        response = service.handle_health_risk(payload)
+        return response
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.post("/api/medical/early-warning")
+async def evaluate_early_warning(payload: dict):
+    """Evaluate early warning indicators."""
+    try:
+        service = get_medical_service()
+        response = service.handle_early_warning(payload)
+        return response
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.post("/api/medical/prescription-safety")
+async def evaluate_prescription_safety(payload: dict):
+    """Evaluate prescription safety."""
+    try:
+        service = get_medical_service()
+        response = service.handle_prescription_safety(payload)
+        return response
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 
 if __name__ == "__main__":
     import uvicorn

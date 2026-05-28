@@ -6,8 +6,8 @@ from dataclasses import dataclass
 import re
 from typing import Any
 
-from repositories.patient_history_repository import PatientHistoryRepository
-from repositories.side_effect_repository import SideEffectRecord, SideEffectRepository
+from repositories.patient_history import PatientHistoryRepository
+from repositories.side_effect import SideEffectRecord, SideEffectRepository
 from schemas.response import WorkflowResponse
 from services.drug_normalization_service import DrugNormalizationService
 

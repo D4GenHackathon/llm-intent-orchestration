@@ -4,6 +4,10 @@
 .tmp/
 __pycache__/
 .DS_Store
+node_modules/
+dist/
+build/
+*.log
 *.pyc
 *.log
 *.aux

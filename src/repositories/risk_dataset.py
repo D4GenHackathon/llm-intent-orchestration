@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Dict, List
 
-from data_access.database import CsvDatabase
+from db.database import CsvDatabase
 
 
 @dataclass(frozen=True)

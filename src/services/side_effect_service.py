@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import List
 
-from repositories.side_effect_repository import SideEffectRecord, SideEffectRepository
+from repositories.side_effect import SideEffectRecord, SideEffectRepository
 from schemas.response import WorkflowResponse
 from schemas.side_effect import (
     SideEffectGroup,

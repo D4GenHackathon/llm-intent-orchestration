@@ -1,4 +1,6 @@
-"""Persistent HTTP backend for the medical workflows."""
+"""Persistent HTTP backend for the medical workflows.
+This script will be replaced with FastAPI, only serve as a temporary solution to expose the medical backend service.
+"""
 
 from __future__ import annotations
 

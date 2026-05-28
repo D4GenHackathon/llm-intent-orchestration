@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Iterable, List, Optional
 
-from repositories.interaction_repository import InteractionRecord, InteractionRepository
+from repositories.interaction import InteractionRecord, InteractionRepository
 from schemas.interaction import (
     DrugInteractionRequest,
     DrugInteractionResponse,
