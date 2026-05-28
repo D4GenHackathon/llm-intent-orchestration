@@ -41,8 +41,6 @@ cp .env.example .env
 # Generate NextAuth key
 pnpm dlx auth secret
 
-# Demo admin user test
-npx tsx scripts/seed-admin.ts
 
 # Generate Prisma client and run migrations
 pnpm dlx prisma generate
@@ -54,7 +52,7 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-### Seed Data
+### Seed Data (Future Changes)
 
 To populate the database with sample hospitals, devices, sensors, and 30 days of readings:
 
@@ -65,7 +63,7 @@ curl -X POST http://localhost:3000/api/seed
 This creates:
 - 2 hospital departments with 3 zones each
 - 12 devices (ESP32 and Arduino Nano)
-- 30 sensors (temperature, humidity, light, CO2)
+- 30 sensors (heart beat, ecg signal, etc)
 - ~43,000 sensor readings (30 days at 30-minute intervals)
 - Alert rules and sample triggered alerts
 - Admin user: `admin@hospital.io` / `password123`
@@ -88,7 +86,7 @@ src/
 │   ├── alerts/              # Alert banner, table, rule form
 │   ├── analytics/           # Trend chart, stats, date picker, export
 │   ├── devices/             # Device table, form, status badge
-│   ├── hospitals/         # Hospital card and form
+│   ├── hospitals/           # Hospital card and form
 │   ├── layout/              # Sidebar, header, mobile nav
 │   ├── sensors/             # Sensor card, chart, grid
 │   └── ui/                  # shadcn/ui component library

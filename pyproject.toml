@@ -16,6 +16,25 @@ python-dotenv = "1.1.1"
 numpy = "^1.26.4"
 joblib = "^1.4.2"
 scikit-learn = "^1.5.2"
+httpx = "^0.28.1"
+mcp = "^1.26.0"
+fastmcp = "^0.1.0"
+langchain-google-genai = "^0.1.0"
+aiofiles = "^23.2.1"
+pyyaml = "^6.0"
+openai = "^1.0.0"
+
+# mininet-wifi dependencies
+matplotlib = "^3.10.0"
+bitstring = "^4.3.0"
+bitarray = "^3.8.0"
+beautifulsoup4 = "^4.14.0"
+FlightRadarAPI = "^1.4.0"
+fastapi = "^0.133.1"
+uvicorn = "^0.41.0"
+pydantic = "^2.12.5"
+influxdb-client = "^1.18.0"  # InfluxDB Python client
+pandas = "^2.0.0"  # Data processing for CSV import
 
 # syntax error check 
 [tool.pyright]

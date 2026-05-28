@@ -1,0 +1,171 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0",
+    "title": "ONOS Core REST API",
+    "description": "ONOS Core REST API for SDN management"
+  },
+  "basePath": "/onos/v1",
+  "schemes": ["http", "https"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "securityDefinitions": {
+    "basicAuth": {
+      "type": "basic"
+    }
+  },
+  "security": [{"basicAuth": []}],
+  "paths": {
+    "/network/configuration": {
+      "get": {
+        "summary": "Get current network configuration",
+        "responses": {"200": {"description": "Current configuration"}}
+      },
+      "post": {
+        "summary": "Upload new network configuration",
+        "parameters": [{"name": "body", "in": "body", "schema": {"type": "object"}}],
+        "responses": {"200": {"description": "Configuration uploaded"}}
+      },
+      "delete": {
+        "summary": "Clear all network configuration",
+        "responses": {"200": {"description": "Configuration cleared"}}
+      }
+    },
+    "/devices": {
+      "get": {"summary": "Get all devices", "responses": {"200": {"description": "Array of devices"}}}
+    },
+    "/devices/{deviceId}": {
+      "get": {
+        "summary": "Get device by ID",
+        "parameters": [{"name": "deviceId", "in": "path", "required": true, "type": "string"}],
+        "responses": {"200": {"description": "Device details"}}
+      },
+      "delete": {
+        "summary": "Remove device",
+        "parameters": [{"name": "deviceId", "in": "path", "required": true, "type": "string"}],
+        "responses": {"204": {"description": "Device removed"}}
+      }
+    },
+    "/hosts": {
+      "get": {"summary": "Get all hosts", "responses": {"200": {"description": "Array of hosts"}}},
+      "post": {
+        "summary": "Add a host",
+        "parameters": [{"name": "body", "in": "body", "schema": {"$ref": "#/definitions/Host"}}],
+        "responses": {"201": {"description": "Host created"}}
+      }
+    },
+    "/hosts/{hostId}": {
+      "get": {
+        "summary": "Get host by ID",
+        "parameters": [{"name": "hostId", "in": "path", "required": true, "type": "string"}],
+        "responses": {"200": {"description": "Host details"}}
+      },
+      "delete": {
+        "summary": "Remove host",
+        "parameters": [{"name": "hostId", "in": "path", "required": true, "type": "string"}],
+        "responses": {"204": {"description": "Host removed"}}
+      }
+    },
+    "/links": {
+      "get": {"summary": "Get all links", "responses": {"200": {"description": "Array of links"}}}
+    },
+    "/links/usestalelinkage": {
+      "get": {"summary": "Get useStaleLinkAge status", "responses": {"200": {"description": "Stale link status"}}},
+      "post": {
+        "summary": "Set useStaleLinkAge status",
+        "parameters": [{"name": "active", "in": "body", "schema": {"type": "boolean"}}],
+        "responses": {"200": {"description": "Status updated"}}
+      }
+    },
+    "/topology": {
+      "get": {"summary": "Get topology overview", "responses": {"200": {"description": "Topology summary"}}}
+    },
+    "/topology/clusters": {
+      "get": {"summary": "Get topology clusters", "responses": {"200": {"description": "Topology clusters"}}}
+    },
+    "/topology/clusters/{clusterId}": {
+      "get": {
+        "summary": "Get topology cluster by ID",
+        "parameters": [{"name": "clusterId", "in": "path", "required": true, "type": "string"}],
+        "responses": {"200": {"description": "Cluster details"}}
+      }
+    },
+    "/flows": {
+      "get": {"summary": "Get all flows", "responses": {"200": {"description": "Array of flows"}}}
+    },
+    "/flows/{deviceId}": {
+      "get": {
+        "summary": "Get flows for device",
+        "parameters": [{"name": "deviceId", "in": "path", "required": true, "type": "string"}],
+        "responses": {"200": {"description": "Array of flows"}}
+      },
+      "post": {
+        "summary": "Add flow rule",
+        "parameters": [
+          {"name": "deviceId", "in": "path", "required": true, "type": "string"},
+          {"name": "body", "in": "body", "schema": {"$ref": "#/definitions/FlowRule"}}
+        ],
+        "responses": {"201": {"description": "Flow created"}}
+      }
+    },
+    "/metrics": {
+      "get": {"summary": "Get all metrics", "responses": {"200": {"description": "Array of metrics"}}}
+    },
+    "/metrics/{metricName}": {
+      "get": {
+        "summary": "Get metric by name",
+        "parameters": [{"name": "metricName", "in": "path", "required": true, "type": "string"}],
+        "responses": {"200": {"description": "Metric details"}}
+      }
+    },
+    "/mcast": {
+      "get": {"summary": "Get multicast routes", "responses": {"200": {"description": "Array of multicast routes"}}},
+      "post": {
+        "summary": "Add multicast route",
+        "parameters": [{"name": "body", "in": "body", "schema": {"$ref": "#/definitions/McastRoute"}}],
+        "responses": {"201": {"description": "Route created"}}
+      }
+    },
+    "/packet/processors": {
+      "get": {"summary": "Get packet processors", "responses": {"200": {"description": "Array of processors"}}}
+    },
+    "/diagnostics": {
+      "get": {
+        "summary": "Get diagnostics information",
+        "parameters": [{"name": "filePath", "in": "query", "required": false, "type": "string"}],
+        "responses": {"200": {"description": "Diagnostics data"}}
+      },
+      "post": {
+        "summary": "Upload diagnostics file",
+        "parameters": [{"name": "file", "in": "formData", "required": true, "type": "file"}],
+        "responses": {"201": {"description": "File uploaded"}}
+      }
+    },
+    "/paths/{src}/{dst}": {
+      "get": {
+        "summary": "Get shortest path",
+        "parameters": [
+          {"name": "src", "in": "path", "required": true, "type": "string"},
+          {"name": "dst", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {"200": {"description": "Shortest path"}}
+      }
+    },
+    "/paths/disjoint/{src}/{dst}/disjoint": {
+      "get": {
+        "summary": "Get disjoint paths",
+        "parameters": [
+          {"name": "src", "in": "path", "required": true, "type": "string"},
+          {"name": "dst", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {"200": {"description": "Disjoint paths"}}
+      }
+    },
+    "/system": {
+      "get": {"summary": "Get system summary", "responses": {"200": {"description": "System summary"}}}
+    },
+    "/network/summary": {
+      "get": {"summary": "Get network summary", "responses": {"200": {"description": "Network summary"}}}
+    }
+  }
+}
