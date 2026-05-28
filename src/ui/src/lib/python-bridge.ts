@@ -80,7 +80,7 @@ export async function callMedicalBackend<T>(endpoint: string, payload: object): 
 export async function ensureMedicalBackendRunning(): Promise<void> {
   const baseUrl = resolveMedicalBackendUrl();
   try {
-    const healthResponse = await fetch(`${baseUrl}/health`, { cache: "no-store" });
+    const healthResponse = await fetch(`${baseUrl}/api/health`, { cache: "no-store" });
     if (healthResponse.ok) {
       return;
     }
@@ -99,13 +99,14 @@ export async function ensureMedicalBackendRunning(): Promise<void> {
     cwd: projectRoot,
     detached: true,
     stdio: "ignore",
+    windowsHide: true,
   });
   child.unref();
 
   for (let attempt = 0; attempt < 10; attempt += 1) {
     await new Promise((resolve) => setTimeout(resolve, 500));
     try {
-      const healthResponse = await fetch(`${baseUrl}/health`, { cache: "no-store" });
+      const healthResponse = await fetch(`${baseUrl}/api/health`, { cache: "no-store" });
       if (healthResponse.ok) {
         return;
       }

@@ -65,3 +65,7 @@ async def health_check():
         "service": "IoT Orchestration API",
         "agents": ["edge_detection", "diagnosis_support", "network_management"]
     }
+
+
+# Import diagnosis routes after shared app state is defined.
+from . import diagnosis_api  # noqa: E402,F401

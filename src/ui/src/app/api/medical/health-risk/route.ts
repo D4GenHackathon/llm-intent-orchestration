@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const data = requestSchema.parse(body);
     await ensureMedicalBackendRunning();
-    const backendResponse = await callMedicalBackend<{ success?: boolean }>("/medical/health-risk", data);
+    const backendResponse = await callMedicalBackend<{ success?: boolean }>("/api/medical/health-risk", data);
     if (backendResponse) {
       return NextResponse.json(backendResponse, { status: backendResponse.success ? 200 : 400 });
     }
