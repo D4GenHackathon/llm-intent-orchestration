@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from repositories.patient_history_repository import PatientHistoryRepository
+from repositories.patient_history import PatientHistoryRepository
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]

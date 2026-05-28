@@ -15,7 +15,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from repositories.risk_dataset_repository import RiskDatasetRepository
+from repositories.risk_datasetkDatasetRepository
 from schemas.response import WorkflowResponse
 from schemas.risk import FeatureContribution, HealthRiskInput, HealthRiskPrediction
 

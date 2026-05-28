@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
-from data_access.database import CsvDatabase
+from db.database import CsvDatabase
 
 
 def canonicalize_drug_name(value: str) -> str:

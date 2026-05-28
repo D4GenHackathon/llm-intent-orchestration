@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Dict, List, Optional, Set
 
-from data_access.database import CsvDatabase
-from repositories.interaction_repository import canonicalize_drug_name
+from db.database import CsvDatabase
+from repositories.interaction import canonicalize_drug_name
 
 
 @dataclass(frozen=True)

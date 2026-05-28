@@ -10,7 +10,7 @@ from typing import Optional
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-from repositories.interaction_repository import canonicalize_drug_name
+from repositories.interaction import canonicalize_drug_name
 
 
 @dataclass(frozen=True)

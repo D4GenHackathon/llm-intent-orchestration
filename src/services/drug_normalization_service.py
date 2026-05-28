@@ -6,7 +6,7 @@ from difflib import SequenceMatcher
 import re
 from typing import Iterable, List, Sequence
 
-from repositories.interaction_repository import canonicalize_drug_name
+from repositories.interaction import canonicalize_drug_name
 from services.rxnorm_normalization_service import RxNormNormalizationService, reduce_rxnorm_name
 
 
