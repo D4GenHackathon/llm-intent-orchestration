@@ -101,67 +101,113 @@ export default function NetworkManagementPage() {
     setIsClient(true);
   }, []);
 
+  // Check authentication and authorization
+  useEffect(() => {
+    if (!session) {
+      router.push("/login");
+    }
+  }, [session, router]);
+
+  // Network Agent API stream integration
+  const networkAgentStream = async (params: any) => {
+    try {
+      const userQuery = params.userInput;
+
+      // Show processing message
+      await params.streamMessage("Processing your network configuration request...");
+
+      // Send request to FastAPI backend
+      const response = await fetch("http://localhost:8000/api/network/configure", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: userQuery,
+          department: "General",
+          priority: "medium",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const taskId = data.task_id;
+
+      // Stream initial response
+      await params.streamMessage(`Task started (ID: ${taskId})\n⏳ Configuring network...`);
+
+      // Poll for task completion
+      let completed = false;
+      let pollCount = 0;
+      const maxPolls = 120; // 2 minutes with 1-second intervals
+
+      while (!completed && pollCount < maxPolls) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        pollCount++;
+
+        try {
+          const statusResponse = await fetch(`http://localhost:8000/api/network/status/${taskId}`);
+          if (!statusResponse.ok) throw new Error("Failed to fetch status");
+
+          const statusData = await statusResponse.json();
+
+          if (statusData.status === "completed") {
+            await params.streamMessage(
+              `Configuration Applied!\n\n${statusData.result}`
+            );
+            completed = true;
+          } else if (statusData.status === "failed") {
+            await params.streamMessage(
+              `Configuration Failed!\n\nError: ${statusData.error}`
+            );
+            completed = true;
+          } else {
+            // Update streaming message with progress
+            const dots = ".".repeat((pollCount % 3) + 1);
+            await params.streamMessage(
+              `⏳ Processing${dots} (${pollCount}s elapsed)`
+            );
+          }
+        } catch (statusError) {
+          console.error("Status check error:", statusError);
+        }
+      }
+
+      if (!completed) {
+        await params.streamMessage(
+          "Configuration timeout. The process may still be running in the background."
+        );
+      }
+
+      await params.endStreamMessage();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      await params.injectMessage(`❌ Error: ${errorMessage}`);
+      await params.endStreamMessage();
+    }
+  };
+
   const chatbotFlow = {
     start: {
-      message: "👋 Welcome to Network Intent Assistant! I can help you express your network access requirements in natural language. What would you like to do?",
-      path: "menu",
+      message: "Welcome to Network Management Agent in Hospital Ecosystem! I can help you configure your SDN network using natural language. What would you like to do?",
+      path: "network_config",
     },
-    menu: {
-      message: "What would you like assistance with?",
-      options: ["Create Network Policy", "View Policies", "Manage Bandwidth", "Security Help"],
-      path: (params: { userInput: string }) => {
-        const input = params.userInput.toLowerCase();
-        if (input.includes("policy") || input.includes("create")) {
-          return "create_policy";
-        } else if (input.includes("view") || input.includes("policies")) {
-          return "view_policies";
-        } else if (input.includes("bandwidth") || input.includes("limit")) {
-          return "bandwidth";
-        } else if (input.includes("security") || input.includes("help")) {
-          return "security";
-        }
-        return "menu";
+    network_config: {
+      message: async (params: any) => {
+        // Process user query through network agent
+        await networkAgentStream(params);
       },
-    },
-    create_policy: {
-      message: "📋 To create a network policy, tell me: Which department needs access? (e.g., 'ICU needs access to sensors and alerts with 100 Mbps')",
-      options: ["Back to Menu"],
-      path: (params: { userInput: string }) => {
-        if (params.userInput.toLowerCase().includes("back")) return "menu";
-        return "create_policy";
-      },
-    },
-    view_policies: {
-      message: "📊 Current network policies are displayed in the Network Policies section above. Each policy shows:\n• Department name\n• Resource access levels\n• Bandwidth allocation\n• Priority level\n• Enable/Disable status",
-      options: ["Back to Menu"],
-      path: (params: { userInput: string }) => {
-        if (params.userInput.toLowerCase().includes("back")) return "menu";
-        return "view_policies";
-      },
-    },
-    bandwidth: {
-      message: "⚡ Bandwidth management helps allocate network resources. High-priority departments (ICU, Emergency) typically get 100+ Mbps, while standard departments get 50 Mbps. How much bandwidth do you need?",
-      options: ["Back to Menu"],
-      path: (params: { userInput: string }) => {
-        if (params.userInput.toLowerCase().includes("back")) return "menu";
-        return "bandwidth";
-      },
-    },
-    security: {
-      message: "🔒 Security best practices:\n• Always enable policies for sensitive departments\n• Use HIGH priority for critical services\n• Isolate department access to required resources only\n• Regularly review and update bandwidth limits\n\nNeed anything else?",
-      options: ["Back to Menu"],
-      path: (params: { userInput: string }) => {
-        if (params.userInput.toLowerCase().includes("back")) return "menu";
-        return "security";
-      },
+      path: "network_config", // Loop back for more configurations
     },
   };
 
   // Check if user is admin
   const isAdmin = session?.user?.role === "ADMIN";
 
-  if (!session) {
-    router.push("/login");
+  if (!isClient || !session) {
     return null;
   }
 
@@ -412,10 +458,9 @@ export default function NetworkManagementPage() {
       <Alert>
         <Lock className="h-4 w-4" />
         <AlertDescription>
-          <strong>LLM-Powered Intent Expression:</strong> Non-IT staff can express network
-          access intents in natural language, which are automatically converted to secure
-          network policies. Each department gets isolated access to only their required
-          resources, enforced by the SDN controller.
+          <strong>LLM-Powered Network Configuration:</strong> Express your network configuration
+          needs in natural language. The AI agent analyzes your request and configures the SDN
+          network automatically with optimal policies and bandwidth allocation.
         </AlertDescription>
       </Alert>
 

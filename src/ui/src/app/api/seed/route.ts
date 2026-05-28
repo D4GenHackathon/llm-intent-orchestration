@@ -43,16 +43,19 @@ export async function POST() {
     });
 
     const zoneNames = [
-      ["Zone A - Tomatoes", "Zone B - Peppers", "Zone C - Herbs"],
-      ["Zone D - Seedlings", "Zone E - Experiments", "Zone F - Propagation"],
+      ["ICU - Intensive Care", "Emergency - Trauma", "Cardiology - Heart"],
+      ["Neurology - Brain", "Orthopedics - Bones", "General - Ward"],
     ];
 
     const sensorConfigs = [
-      { type: "TEMPERATURE" as const, unit: "\u00b0C", min: 18, max: 35, base: 24 },
-      { type: "HUMIDITY" as const, unit: "%", min: 40, max: 90, base: 65 },
-      { type: "SOIL_MOISTURE" as const, unit: "%", min: 20, max: 80, base: 55 },
-      { type: "LIGHT" as const, unit: "lux", min: 200, max: 1200, base: 600 },
-      { type: "CO2" as const, unit: "ppm", min: 300, max: 1500, base: 800 },
+      { type: "HEART_RATE", unit: "bpm", min: 50, max: 120, base: 75 },
+      { type: "SPO2_LEVEL", unit: "%", min: 90, max: 100, base: 98 },
+      { type: "ECG_SIGNAL", unit: "mV", min: -1, max: 5, base: 0.5 },
+      { type: "RESPIRATION_RATE", unit: "breaths/min", min: 12, max: 25, base: 16 },
+      { type: "BODY_TEMPERATURE", unit: "°C", min: 35, max: 40, base: 37 },
+      { type: "BLOOD_PRESSURE_SYS", unit: "mmHg", min: 90, max: 180, base: 120 },
+      { type: "BLOOD_PRESSURE_DIA", unit: "mmHg", min: 50, max: 110, base: 80 },
+      { type: "BLOOD_GLUCOSE", unit: "mg/dL", min: 70, max: 200, base: 100 },
     ];
 
     for (const [ghIndex, gh] of [h1, h2].entries()) {
@@ -60,7 +63,7 @@ export async function POST() {
         const zone = await prisma.zone.create({
           data: {
             name: zoneName,
-            description: `Zone ${zIndex + 1} of ${gh.name}`,
+            description: `Medical Zone in ${gh.name}`,
             hospitalId: gh.id,
           },
         });
@@ -68,19 +71,26 @@ export async function POST() {
         for (let dIdx = 0; dIdx < 2; dIdx++) {
           const device = await prisma.device.create({
             data: {
-              name: `Sensor Hub ${zoneName.split(" - ")[0]}-${dIdx + 1}`,
+              name: `Patient Monitor ${zoneName.split(" - ")[0]}-${dIdx + 1}`,
               type: dIdx === 0 ? "ESP32" : "Arduino Nano",
               status: Math.random() > 0.1 ? "ONLINE" : "OFFLINE",
               zoneId: zone.id,
             },
           });
 
-          const deviceSensors = dIdx === 0 ? sensorConfigs.slice(0, 3) : sensorConfigs.slice(3);
+          // Assign 4 sensors per device (rotating through all medical sensors)
+          const startIdx = (dIdx * 4) % sensorConfigs.length;
+          const deviceSensors = [
+            sensorConfigs[(startIdx) % sensorConfigs.length],
+            sensorConfigs[(startIdx + 1) % sensorConfigs.length],
+            sensorConfigs[(startIdx + 2) % sensorConfigs.length],
+            sensorConfigs[(startIdx + 3) % sensorConfigs.length],
+          ];
 
           for (const config of deviceSensors) {
             const sensor = await prisma.sensor.create({
               data: {
-                name: `${config.type.replace("_", " ")} - ${zoneName}`,
+                name: `${config.type.replace(/_/g, " ")} - ${zoneName}`,
                 type: config.type,
                 unit: config.unit,
                 minValue: config.min,
