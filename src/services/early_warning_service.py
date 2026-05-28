@@ -323,21 +323,14 @@ class EarlyWarningService:
         sources: list[str],
     ) -> str:
         urgent = any(item["severity"] == "urgent" for item in abnormalities)
-        labels = ", ".join(f"{item['type']} ({item['rule']})" for item in abnormalities)
-        action = (
-            "URGENT ALERT: a fall or high-risk warning sign was detected. "
-            "Check the patient immediately, assess injury, consciousness, and vital signs, "
-            "and escalate to clinical staff according to the local care protocol."
-            if urgent
-            else "ALERT: an abnormal vital sign was detected. "
-            "Repeat the measurement, monitor closely, and escalate to clinical staff if the abnormality persists or worsens."
-        )
-        source_text = f" Suggested sources: {'; '.join(sources[:3])}." if sources else ""
-        history_text = self._history_alert_text(record)
+        if urgent:
+            return (
+                "Check the patient immediately, assess injury, consciousness, and vital signs, "
+                "and escalate to clinical staff according to the local care protocol."
+            )
         return (
-            f"{action} Time {record['timestamp']}; temperature {record['temperature']} C; "
-            f"heart rate {record['heart_rate']} bpm; fall detected: {record['fall_detected']}. "
-            f"{history_text}Abnormalities: {labels}.{source_text}"
+            "Repeat the measurement, monitor closely, and escalate to clinical staff if the abnormality persists "
+            "or worsens."
         )
 
     def _history_alert_text(self, record: dict[str, Any]) -> str:
@@ -377,13 +370,15 @@ class EarlyWarningService:
             "Use only the sensor record, rule abnormalities, and retrieved guideline context below.\n"
             "Do not diagnose. Do not invent medication, dosage, or treatment. Recommend escalation to clinical staff "
             "when urgent signs or a fall are present. Include source citations from the context labels when relevant.\n\n"
-            "Do not repeat the sensor record as a Time, Findings, or Observation Summary section; the UI already displays it.\n\n"
+            "Return one concise action sentence only. "
+            "Do not repeat timestamp, vital signs, fall status, patient history, abnormality names, or sources; "
+            "the UI already displays those fields separately.\n\n"
             f"Sensor record: {record}\n"
             f"Rule abnormalities: {abnormalities}\n"
             f"RAG query: {rag_query}\n"
             f"Retrieved guideline context:\n{context_text}\n\n"
             f"Fallback draft: {draft}\n\n"
-            "Return only the final alert with a short explanation and sources."
+            "Return only the final alert sentence."
         )
         try:
             response = llm.call(prompt)
