@@ -61,31 +61,64 @@ export function resolveMedicalBackendUrl(): string {
   return process.env.MEDICAL_BACKEND_URL || "http://127.0.0.1:8010";
 }
 
+function legacyMedicalEndpoint(endpoint: string): string {
+  if (endpoint === "/api/health") {
+    return "/health";
+  }
+  if (endpoint.startsWith("/api/medical/")) {
+    return endpoint.replace("/api/medical/", "/medical/");
+  }
+  return endpoint;
+}
+
+async function fetchJson<T>(baseUrl: string, endpoint: string, payload: object): Promise<T | null> {
+  const response = await fetch(`${baseUrl}${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (response.status === 404) {
+    throw new Error("Medical backend endpoint was not found.");
+  }
+  return (await response.json()) as T;
+}
+
 export async function callMedicalBackend<T>(endpoint: string, payload: object): Promise<T | null> {
   const baseUrl = resolveMedicalBackendUrl();
   try {
-    const response = await fetch(`${baseUrl}${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    });
-    const data = (await response.json()) as T;
-    return data;
+    return await fetchJson<T>(baseUrl, endpoint, payload);
   } catch {
-    return null;
+    const legacyEndpoint = legacyMedicalEndpoint(endpoint);
+    if (legacyEndpoint === endpoint) {
+      return null;
+    }
+    try {
+      return await fetchJson<T>(baseUrl, legacyEndpoint, payload);
+    } catch {
+      return null;
+    }
   }
+}
+
+async function isMedicalBackendHealthy(baseUrl: string): Promise<boolean> {
+  for (const endpoint of ["/api/health", "/health"]) {
+    try {
+      const healthResponse = await fetch(`${baseUrl}${endpoint}`, { cache: "no-store" });
+      if (healthResponse.ok) {
+        return true;
+      }
+    } catch {
+      // Try the next health endpoint.
+    }
+  }
+  return false;
 }
 
 export async function ensureMedicalBackendRunning(): Promise<void> {
   const baseUrl = resolveMedicalBackendUrl();
-  try {
-    const healthResponse = await fetch(`${baseUrl}/api/health`, { cache: "no-store" });
-    if (healthResponse.ok) {
-      return;
-    }
-  } catch {
-    // Backend is not up yet. Try to start it below.
+  if (await isMedicalBackendHealthy(baseUrl)) {
+    return;
   }
 
   const projectRoot = resolveProjectRoot();
@@ -105,13 +138,8 @@ export async function ensureMedicalBackendRunning(): Promise<void> {
 
   for (let attempt = 0; attempt < 10; attempt += 1) {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    try {
-      const healthResponse = await fetch(`${baseUrl}/api/health`, { cache: "no-store" });
-      if (healthResponse.ok) {
-        return;
-      }
-    } catch {
-      // keep retrying briefly
+    if (await isMedicalBackendHealthy(baseUrl)) {
+      return;
     }
   }
 }
