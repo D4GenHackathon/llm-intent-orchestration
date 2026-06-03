@@ -92,9 +92,3 @@ cd src/ui && pnpm dev
 5. CrewAI + FastMCP: [github.com/ashishpatel26/Crewai-MCP-Course](https://github.com/ashishpatel26/Crewai-MCP-Course)
 6. Integration with FastMCP via [langchain-mcp-adapters](https://github.com/langchain-ai/langchain-mcp-adapters)
 7. ONOS MCP Server (Code inspiration):[onos-mcp-server](https://github.com/MCP-Mirror/davidlin2k_onos-mcp-server)
-## Future Work
-1. Giang task
-- Edge AI deployment for resource-constrained devices [Edge AI and IoT in 2025](https://www.youtube.com/watch?v=P54zzvqnVLk&t=874s)
-
-2. Trang task 
-- Data field (data files) & LLM Agent Workflow discussion with professor Hamidi.

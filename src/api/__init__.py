@@ -1,6 +1,6 @@
 """API package for IoT Orchestration."""
 """FastAPI Server for IoT Orchestration with Crew AI agents."""
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pydantic import BaseModel

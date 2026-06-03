@@ -8,7 +8,10 @@
 # - POST /api/medical/prescription-safety
 # - GET /api/health
 
-from . import *
+from . import app, crew_instance, active_tasks
+from fastapi import BackgroundTasks
+
+import uuid
 from services.medical_backend_service import MedicalBackendService
 from schemas.interaction import DrugInteractionRequest
 from schemas.side_effect import SideEffectLookupRequest
@@ -78,7 +81,7 @@ def get_medical_service():
 async def health_check():
     """Health check endpoint."""
     return {
-        "status": "ok",
+        "status": "Active",
         "service": "IoT Orchestration API with Medical Backend"
     }
 
