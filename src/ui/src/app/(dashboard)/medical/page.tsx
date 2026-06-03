@@ -442,10 +442,21 @@ function cleanMarkdownAlert(text: string): string {
     /\n\s*\*?\*?Time\*?\*?\s*:?\s*\n[\s\S]*?(?=\n\s*\*?\*?(Clinical Explanation|Explanation|Recommendation)\*?\*?\s*:?\s*\n)/i,
     "\n",
   );
-  return withoutRepeatedObservations
+  const normalized = withoutRepeatedObservations
     .replace(/\*\*/g, "")
     .replace(/^\s*[*-]\s+/gm, "")
     .replace(/[ \t]{2,}/g, " ")
+    .trim();
+  const urgentAction = normalized.match(/(Check the patient immediately[\s\S]*?local care protocol\.)/i);
+  if (urgentAction?.[1]) {
+    return urgentAction[1].replace(/^check/i, "Check").trim();
+  }
+  const routineAction = normalized.match(/(Repeat the measurement[\s\S]*?or worsens\.)/i);
+  if (routineAction?.[1]) {
+    return routineAction[1].replace(/^repeat/i, "Repeat").trim();
+  }
+  return normalized
+    .replace(/\s+(Time\s+\d{4}-\d{2}-\d{2}|Patient history \(|Abnormalities:|Suggested sources:)[\s\S]*$/i, "")
     .trim();
 }
 
