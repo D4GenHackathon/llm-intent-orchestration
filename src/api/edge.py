@@ -3,7 +3,9 @@
 # Endpoints available:
 # - POST /api/edge/detect
 # - GET /api/edge/status/{task_id}
-from . import *
+from fastapi import BackgroundTasks
+import uuid
+from . import app, crew_instance, active_tasks
 
 @app.post("/api/edge/detect")
 async def run_edge_detection(background_tasks: BackgroundTasks):

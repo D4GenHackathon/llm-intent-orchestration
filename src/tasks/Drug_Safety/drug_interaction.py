@@ -5,11 +5,17 @@ from __future__ import annotations
 from typing import Optional
 
 from crewai import Task
+from schemas.interaction import DrugInteractionRequest
+from services.interaction_service import InteractionService
 
 
 def drug_interaction_router(agent, query: Optional[str] = None, drugs: Optional[list[str]] = None):
     """Create a CrewAI task for deterministic drug interaction checking."""
     drug_count = len(drugs) if drugs else 0
+    service = InteractionService()
+    task = service.check_interactions(
+            DrugInteractionRequest(query=query or "", drugs=drugs or [])
+            ).to_dict()
     return Task(
         description=(
             f"Check structured pairwise interactions for {drug_count} input drugs. "
@@ -19,6 +25,8 @@ def drug_interaction_router(agent, query: Optional[str] = None, drugs: Optional[
             "A structured interaction report including normalized drugs, interaction_found, severity if available, "
             "mechanism if available, recommendation, and source."
         ),
+        task=task,
+        service=service,
         agent=agent,
     )
 
