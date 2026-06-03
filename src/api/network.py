@@ -6,10 +6,14 @@
 # - GET /api/network/health
 # - GET /api/network/tools
 # - POST /api/network/tools/execute
+# - POST /api/network/chat
+# - GET /api/network/chat/{session_id}
+# - POST /api/network/chat/{session_id}/clear
 
 from __future__ import annotations
 
 from typing import Any
+from datetime import datetime, timezone
 
 from fastapi import BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
@@ -19,9 +23,29 @@ from tasks.IoT_Management.network_router import get_network_tool_registry, run_n
 
 import uuid
 
+# Chat session storage
+chat_sessions: dict[str, list[dict]] = {}
+
+
 class NetworkToolExecutionRequest(BaseModel):
     tool_name: str = Field(..., description="Registered ONOS tool name")
     arguments: dict[str, Any] = Field(default_factory=dict, description="Keyword arguments for the selected tool")
+
+
+class ChatMessage(BaseModel):
+    """Chat message for chatbot conversation."""
+    session_id: str = Field(..., description="Unique session ID for chat conversation")
+    message: str = Field(..., description="User message")
+    stream: bool = Field(default=False, description="Whether to stream the response")
+
+
+class ChatResponse(BaseModel):
+    """Response from chatbot."""
+    session_id: str
+    message: str
+    timestamp: str
+    task_id: str | None = None
+    status: str = "completed"
 
 
 @app.post("/api/network/configure")
@@ -113,5 +137,107 @@ async def execute_network_tool(request: NetworkToolExecutionRequest):
         "result": result,
     }
 
+
+@app.post("/api/network/chat")
+async def chat_with_network_agent(request: ChatMessage, background_tasks: BackgroundTasks) -> ChatResponse:
+    """Chat with network management agent for conversational network configuration."""
+    if crew_instance is None:
+        raise HTTPException(status_code=500, detail="CrewAI instance not initialized")
+
+    session_id = request.session_id
+    if session_id not in chat_sessions:
+        chat_sessions[session_id] = []
+
+    task_id = str(uuid.uuid4())
+
+    def process_chat_message() -> None:
+        try:
+            # Add user message to session history
+            chat_sessions[session_id].append({
+                "role": "user",
+                "message": request.message,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+
+            # Run network agent with user query
+            result = crew_instance.run_network(query=request.message)
+
+            # Add assistant response to session history
+            chat_sessions[session_id].append({
+                "role": "assistant",
+                "message": str(result),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+
+            active_tasks[task_id] = {
+                "status": "completed",
+                "result": result,
+                "error": None,
+            }
+        except Exception as exc:
+            chat_sessions[session_id].append({
+                "role": "assistant",
+                "message": f"Error processing your request: {str(exc)}",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+            active_tasks[task_id] = {
+                "status": "failed",
+                "result": None,
+                "error": str(exc),
+            }
+
+    if request.stream:
+        background_tasks.add_task(process_chat_message)
+        return ChatResponse(
+            session_id=session_id,
+            message="Processing your network configuration request...",
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            task_id=task_id,
+            status="processing",
+        )
+    else:
+        process_chat_message()
+        return ChatResponse(
+            session_id=session_id,
+            message=chat_sessions[session_id][-1]["message"] if chat_sessions[session_id] else "No response",
+            timestamp=chat_sessions[session_id][-1]["timestamp"] if chat_sessions[session_id] else datetime.now(timezone.utc).isoformat(),
+            task_id=task_id,
+            status=active_tasks[task_id]["status"],
+        )
+
+
+@app.get("/api/network/chat/{session_id}")
+async def get_chat_history(session_id: str):
+    """Get chat history for a session."""
+    if session_id not in chat_sessions:
+        return {
+            "session_id": session_id,
+            "history": [],
+            "message": "No chat history found",
+        }
+
+    return {
+        "session_id": session_id,
+        "history": chat_sessions[session_id],
+        "message_count": len(chat_sessions[session_id]),
+    }
+
+
+@app.post("/api/network/chat/{session_id}/clear")
+async def clear_chat_history(session_id: str):
+    """Clear chat history for a session."""
+    if session_id in chat_sessions:
+        chat_sessions[session_id] = []
+        return {
+            "session_id": session_id,
+            "status": "cleared",
+            "message": "Chat history cleared",
+        }
+
+    return {
+        "session_id": session_id,
+        "status": "not_found",
+        "message": "Session not found",
+    }
 
 
