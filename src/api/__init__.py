@@ -9,8 +9,6 @@ import os
 from dotenv import load_dotenv
 from typing import Optional
 
-from crew.crew import CustomCrew
-
 load_dotenv()
 
 # Store active tasks
@@ -21,8 +19,14 @@ crew_instance = None
 async def lifespan(app: FastAPI):
     """Manage app lifecycle."""
     global crew_instance
-    crew_instance = CustomCrew()
-    print("Crew AI initialized")
+    try:
+        from crew.crew import CustomCrew
+
+        crew_instance = CustomCrew()
+        print("Crew AI initialized")
+    except Exception as exc:
+        crew_instance = None
+        print(f"Warning: Crew AI initialization skipped: {exc}")
     yield
     print("Shutting down...")
 
@@ -65,3 +69,7 @@ async def health_check():
         "service": "IoT Orchestration API",
         "agents": ["edge_detection", "diagnosis_support", "network_management"]
     }
+
+
+# Import diagnosis routes after shared app state is defined.
+from . import diagnosis_api  # noqa: E402,F401
