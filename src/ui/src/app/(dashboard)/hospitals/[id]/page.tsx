@@ -7,6 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MapPin, Cpu, Activity, Trash2 } from "lucide-react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+
+const HospitalMap3D = dynamic(
+  () => import("@/components/hospitals/HospitalMap3D"),
+  { ssr: false, loading: () => (
+    <div className="flex items-center justify-center h-48 rounded-lg border text-muted-foreground text-sm">
+      Loading 3D map…
+    </div>
+  )}
+);
 
 interface Hospital {
   id: string;
@@ -32,6 +42,64 @@ interface Hospital {
   }[];
 }
 
+// Adapt API response to the shape HospitalMap3D expects.
+// The component groups devices into floors — since the API has flat zones,
+// we split them into chunks of 4 per floor.
+function toMapData(hospital: Hospital) {
+  const ZONES_PER_FLOOR = 4;
+  const ZONE_COLORS: Record<string, number> = {
+    0: 0xe05252, 1: 0xe07d35, 2: 0x5a8ae0, 3: 0x4eb88a,
+    4: 0x9b59b6, 5: 0x2ecc71, 6: 0xf39c12, 7: 0x1abc9c,
+  };
+  const ZONE_LAYOUTS = [
+    { x: -5, z: -3, w: 5, d: 4 },
+    { x:  1, z: -3, w: 5, d: 4 },
+    { x: -5, z:  2, w: 5, d: 4 },
+    { x:  1, z:  2, w: 5, d: 4 },
+  ];
+  const DEVICE_OFFSETS = [
+    [[-0.9, -0.5], [0.9,  0.5]],
+    [[-0.9,  0.5], [0.9, -0.5]],
+    [[ 0.0, -0.8], [0.0,  0.8]],
+    [[-0.7, -0.7], [0.7,  0.7]],
+  ];
+
+  const floors = [];
+  for (let fi = 0; fi * ZONES_PER_FLOOR < hospital.zones.length; fi++) {
+    const chunk = hospital.zones.slice(fi * ZONES_PER_FLOOR, (fi + 1) * ZONES_PER_FLOOR);
+    floors.push({
+      level: fi,
+      label: fi === 0 ? "Ground Floor" : `Floor ${fi}`,
+      zones: chunk.map((zone, zi) => {
+        const layout = ZONE_LAYOUTS[zi % ZONE_LAYOUTS.length];
+        const offsets = DEVICE_OFFSETS[zi % DEVICE_OFFSETS.length];
+        return {
+          id: zone.id,
+          name: zone.name,
+          type: "general",
+          x: layout.x,
+          z: layout.z,
+          w: layout.w,
+          d: layout.d,
+          color: ZONE_COLORS[zi % 8],
+          devices: zone.devices.slice(0, 4).map((dev, di) => {
+            const [ox, oz] = offsets[di % offsets.length];
+            return {
+              id: dev.id,
+              name: dev.name,
+              status: dev.status,
+              x: layout.x + layout.w / 2 + ox,
+              z: layout.z + layout.d / 2 + oz,
+            };
+          }),
+        };
+      }),
+    });
+  }
+
+  return { name: hospital.name, floors };
+}
+
 export default function HospitalDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -50,10 +118,8 @@ export default function HospitalDetailPage() {
   }
 
   if (!hospital) return <div className="p-6">Loading...</div>;
-  const totalDevices = hospital.zones.reduce(
-    (acc, z) => acc + z.devices.length,
-    0
-  );
+
+  const totalDevices = hospital.zones.reduce((acc, z) => acc + z.devices.length, 0);
   const totalSensors = hospital.zones.reduce(
     (acc, z) => acc + z.devices.reduce((a, d) => a + d.sensors.length, 0),
     0
@@ -61,6 +127,7 @@ export default function HospitalDetailPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/hospitals">
           <Button variant="ghost" size="icon">
@@ -84,6 +151,7 @@ export default function HospitalDetailPage() {
         <p className="text-muted-foreground">{hospital.description}</p>
       )}
 
+      {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="pt-6">
@@ -111,6 +179,10 @@ export default function HospitalDetailPage() {
         </Card>
       </div>
 
+      {/* 3D Map */}
+      <HospitalMap3D hospitalData={toMapData(hospital)} />
+
+      {/* Zones list */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Zones</h2>
         {hospital.zones.map((zone) => (
@@ -134,19 +206,13 @@ export default function HospitalDetailPage() {
                         {device.sensors.length} sensors
                       </p>
                     </div>
-                    <Badge
-                      variant={
-                        device.status === "ONLINE" ? "default" : "secondary"
-                      }
-                    >
+                    <Badge variant={device.status === "ONLINE" ? "default" : "secondary"}>
                       {device.status}
                     </Badge>
                   </div>
                 ))}
                 {zone.devices.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    No devices in this zone
-                  </p>
+                  <p className="text-sm text-muted-foreground">No devices in this zone</p>
                 )}
               </div>
             </CardContent>
