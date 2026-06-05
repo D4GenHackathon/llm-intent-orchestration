@@ -39,13 +39,26 @@ class ChatMessage(BaseModel):
     stream: bool = Field(default=False, description="Whether to stream the response")
 
 
+class ChatChoice(BaseModel):
+    """Chat completion choice."""
+    index: int
+    message: dict
+    finish_reason: str = "stop"
+
+class ChatUsage(BaseModel):
+    """Token usage information."""
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+
 class ChatResponse(BaseModel):
-    """Response from chatbot."""
-    session_id: str
-    message: str
-    timestamp: str
-    task_id: str | None = None
-    status: str = "completed"
+    """Chat completion response."""
+    id: str
+    object: str = "chat.completion"
+    created: int
+    model: str = "llm-agent-ollama"
+    choices: list[ChatChoice]
+    usage: ChatUsage
 
 
 @app.post("/api/network/configure")
@@ -149,13 +162,14 @@ async def chat_with_network_agent(request: ChatMessage, background_tasks: Backgr
         chat_sessions[session_id] = []
 
     task_id = str(uuid.uuid4())
+    import time
 
     def process_chat_message() -> None:
         try:
             # Add user message to session history
             chat_sessions[session_id].append({
                 "role": "user",
-                "message": request.message,
+                "content": request.message,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             })
 
@@ -165,7 +179,7 @@ async def chat_with_network_agent(request: ChatMessage, background_tasks: Backgr
             # Add assistant response to session history
             chat_sessions[session_id].append({
                 "role": "assistant",
-                "message": str(result),
+                "content": str(result),
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             })
 
@@ -177,7 +191,7 @@ async def chat_with_network_agent(request: ChatMessage, background_tasks: Backgr
         except Exception as exc:
             chat_sessions[session_id].append({
                 "role": "assistant",
-                "message": f"Error processing your request: {str(exc)}",
+                "content": f"Error processing your request: {str(exc)}",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             })
             active_tasks[task_id] = {
@@ -189,20 +203,35 @@ async def chat_with_network_agent(request: ChatMessage, background_tasks: Backgr
     if request.stream:
         background_tasks.add_task(process_chat_message)
         return ChatResponse(
-            session_id=session_id,
-            message="Processing your network configuration request...",
-            timestamp=datetime.now(timezone.utc).isoformat(),
-            task_id=task_id,
-            status="processing",
+            id=task_id,
+            created=int(time.time()),
+            choices=[
+                ChatChoice(
+                    index=0,
+                    message={
+                        "role": "assistant",
+                        "content": "Processing your network configuration request...",
+                    },
+                )
+            ],
+            usage=ChatUsage(),
         )
     else:
         process_chat_message()
+        content = chat_sessions[session_id][-1]["content"] if chat_sessions[session_id] else "No response"
         return ChatResponse(
-            session_id=session_id,
-            message=chat_sessions[session_id][-1]["message"] if chat_sessions[session_id] else "No response",
-            timestamp=chat_sessions[session_id][-1]["timestamp"] if chat_sessions[session_id] else datetime.now(timezone.utc).isoformat(),
-            task_id=task_id,
-            status=active_tasks[task_id]["status"],
+            id=task_id,
+            created=int(time.time()),
+            choices=[
+                ChatChoice(
+                    index=0,
+                    message={
+                        "role": "assistant",
+                        "content": content,
+                    },
+                )
+            ],
+            usage=ChatUsage(),
         )
 
 
