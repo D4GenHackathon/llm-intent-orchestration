@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import * as THREE from "three";
 
 // ─── Seeded deterministic random ────────────────────────────────────────────
-function seededRng(seed) {
+function seededRng(seed: string | number) {
   let s = typeof seed === "string"
     ? seed.split("").reduce((a, c) => (Math.imul(31, a) + c.charCodeAt(0)) | 0, 0)
     : seed | 0;
@@ -17,7 +18,7 @@ function seededRng(seed) {
 // ─── Room type classification ─────────────────────────────────────────────────
 // Returns a stable string type used for furniture/bed logic.
 // More granular lab subtypes so pathology ≠ microbiology ≠ biobank etc.
-function classifyRoom(name = "", capacity = 4) {
+function classifyRoom(name = "", capacity = 4): string {
   const n = name.toLowerCase();
   if (n.includes("icu") || n.includes("intensive"))                          return "icu";
   if (n.includes("surgery") || n.includes("operating") || n.includes("or ")) return "surgery";
@@ -39,7 +40,7 @@ function classifyRoom(name = "", capacity = 4) {
 
 // ─── Color per room type ──────────────────────────────────────────────────────
 // Same broad category → similar hue family, but distinct enough to tell apart.
-const ROOM_TYPE_COLORS = {
+const ROOM_TYPE_COLORS: Record<string, number> = {
   icu:               0xe05252, // red
   surgery:           0x5a8ae0, // blue
   lab_pathology:     0xf39c12, // amber
@@ -59,7 +60,7 @@ const ROOM_TYPE_COLORS = {
 
 // ─── For same-type rooms, derive a subtle hue shift from the full name ────────
 // e.g. "Microbiology Lab A" vs "Microbiology Lab B" → same family, slightly different shade
-function roomColor(name, capacity) {
+function roomColor(name: string, capacity: number): number {
   const type = classifyRoom(name, capacity);
   const base = ROOM_TYPE_COLORS[type] ?? 0x4a90d9;
 
@@ -90,7 +91,7 @@ function roomColor(name, capacity) {
   h = ((h * 360 + shift + 360) % 360) / 360;
 
   // HSL → RGB
-  const hue2rgb = (p, q, t) => {
+  const hue2rgb = (p: number, q: number, t: number): number => {
     if (t < 0) t += 1; if (t > 1) t -= 1;
     if (t < 1/6) return p + (q - p) * 6 * t;
     if (t < 1/2) return q;
@@ -106,7 +107,7 @@ function roomColor(name, capacity) {
 }
 
 // ─── Per-floor palette & personality ─────────────────────────────────────────
-const FLOOR_THEMES = [
+const FLOOR_THEMES: Record<string, any>[] = [
   { wallColor: 0xd8d2c5, floorColor: 0xf0ece4, accentColor: 0x4a90d9, trim: 0xc8b89a, name: "Ground" },
   { wallColor: 0xcdd5e0, floorColor: 0xe8edf5, accentColor: 0x5a8ae0, trim: 0xa0b4cc, name: "First" },
   { wallColor: 0xcde0d5, floorColor: 0xe5f5ee, accentColor: 0x4eb88a, trim: 0x90c4a8, name: "Second" },
@@ -116,7 +117,7 @@ const FLOOR_THEMES = [
 
 // ─── Compute layout packing from zones array ──────────────────────────────────
 // Generates different-sized rooms tightly packed into columns
-function computeLayouts(zones, rng) {
+function computeLayouts(zones: any[], rng: () => number) {
   const BUILDING_W = 30;
   const BUILDING_D = 18;
   const CORRIDOR_Z  = 1;   // corridor center Z
@@ -124,7 +125,7 @@ function computeLayouts(zones, rng) {
   const MARGIN      = 0.3;
 
   // Assign each zone a relative size based on capacity / type
-  const sizes = zones.map(z => {
+  const sizes = zones.map((z: any) => {
     const type = classifyRoom(z.name, z.devices?.length ?? 2);
     const base = {
       icu: 1.4, surgery: 1.6, imaging: 1.5, lab: 1.2,
@@ -147,12 +148,12 @@ function computeLayouts(zones, rng) {
   const topTotal    = topSizes.reduce((a, b) => a + b, 0) || 1;
   const bottomTotal = bottomSizes.reduce((a, b) => a + b, 0) || 1;
 
-  const layouts = [];
+  const layouts: { x: number; z: number; w: number; d: number }[] = [];
   const slabHalfW = BUILDING_W / 2;
 
   // Top row: negative Z side
   let curX = -slabHalfW + MARGIN;
-  topZones.forEach((z, i) => {
+  topZones.forEach((z: any, i: number) => {
     const frac = topSizes[i] / topTotal;
     const w    = (BUILDING_W - 2 * MARGIN) * frac - MARGIN;
     const d    = BUILDING_D / 2 - CORRIDOR_H / 2 - MARGIN * 2;
@@ -164,7 +165,7 @@ function computeLayouts(zones, rng) {
 
   // Bottom row: positive Z side
   curX = -slabHalfW + MARGIN;
-  bottomZones.forEach((z, i) => {
+  bottomZones.forEach((z: any, i: number) => {
     const frac = bottomSizes[i] / bottomTotal;
     const w    = (BUILDING_W - 2 * MARGIN) * frac - MARGIN;
     const d    = BUILDING_D / 2 - CORRIDOR_H / 2 - MARGIN * 2;
@@ -178,7 +179,7 @@ function computeLayouts(zones, rng) {
 }
 
 // ─── Bed placement per room type ─────────────────────────────────────────────
-function placeBeds(group, type, cx, cz, w, d, rng) {
+function placeBeds(group: THREE.Group, type: string, cx: number, cz: number, w: number, d: number, rng: () => number) {
   const mats = {
     standard:  new THREE.MeshLambertMaterial({ color: 0xeeeae0 }),
     icu:       new THREE.MeshLambertMaterial({ color: 0xdce8f0 }),
@@ -249,7 +250,7 @@ function placeBeds(group, type, cx, cz, w, d, rng) {
 }
 
 // ─── Furniture per room type ──────────────────────────────────────────────────
-function addRoomFurniture(group, type, cx, cz, w, d, rng, floorTheme) {
+function addRoomFurniture(group: THREE.Group, type: string, cx: number, cz: number, w: number, d: number, rng: () => number, floorTheme: any) {
   const woodMat  = new THREE.MeshLambertMaterial({ color: floorTheme.trim });
   const darkMat  = new THREE.MeshLambertMaterial({ color: 0x2a2a2a });
   const metalMat = new THREE.MeshLambertMaterial({ color: 0x8a8a8a });
@@ -335,7 +336,7 @@ function addRoomFurniture(group, type, cx, cz, w, d, rng, floorTheme) {
       const desk = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.72, 0.7), woodMat);
       desk.position.set(cx - 0.2, 0.36, cz);
       group.add(desk);
-      [-0.4, 0.4].forEach(oz => {
+      [-0.4, 0.4].forEach((oz: number) => {
         const chair = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.07, 0.44), new THREE.MeshLambertMaterial({ color: 0x3a5a8a }));
         chair.position.set(cx + 0.9, 0.44, cz + oz);
         group.add(chair);
@@ -380,7 +381,7 @@ function addRoomFurniture(group, type, cx, cz, w, d, rng, floorTheme) {
 }
 
 // ─── Corridor / lobby details per floor ─────────────────────────────────────
-function addFloorCorridorDetails(group, floorIdx, floorTheme, rng) {
+function addFloorCorridorDetails(group: THREE.Group, floorIdx: number, floorTheme: any, rng: () => number) {
   const accentMat = new THREE.MeshLambertMaterial({ color: floorTheme.accentColor });
 
   // Seating along corridor — quantity varies by floor
@@ -391,7 +392,7 @@ function addFloorCorridorDetails(group, floorIdx, floorTheme, rng) {
     const seat = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.07, 0.44), seatMat);
     seat.position.set(cx, 0.42, floorIdx % 2 === 0 ? 0.8 : -0.8);
     group.add(seat);
-    [[-0.18, -0.18], [0.18, -0.18], [-0.18, 0.18], [0.18, 0.18]].forEach(([lx, lz]) => {
+    [[-0.18, -0.18], [0.18, -0.18], [-0.18, 0.18], [0.18, 0.18]].forEach(([lx, lz]: number[]) => {
       const leg = new THREE.Mesh(
         new THREE.CylinderGeometry(0.025, 0.025, 0.42, 6),
         new THREE.MeshLambertMaterial({ color: 0x888888 })
@@ -410,7 +411,7 @@ function addFloorCorridorDetails(group, floorIdx, floorTheme, rng) {
     [-13, -7.5], [13, -7.5], [-13, 7.5], [13, 7.5]
   ].slice(0, plantCount);
 
-  plantPositions.forEach(([px, pz]) => {
+  plantPositions.forEach(([px, pz]: number[]) => {
     if (rng() > 0.25) {
       const pot = new THREE.Mesh(
         new THREE.CylinderGeometry(0.22, 0.16, 0.35, 10),
@@ -425,7 +426,7 @@ function addFloorCorridorDetails(group, floorIdx, floorTheme, rng) {
       const trunkH = 0.5 + rng() * 0.4;
       trunk.position.set(px, 0.55 + trunkH / 2, pz);
       group.add(trunk);
-      [[0, 0, 0.3 + rng() * 0.1], [0.15, 0.22, 0.22], [-0.1, 0.24, 0.2]].forEach(([ox, oy, r]) => {
+      [[0, 0, 0.3 + rng() * 0.1], [0.15, 0.22, 0.22], [-0.1, 0.24, 0.2]].forEach(([ox, oy, r]: number[]) => {
         const leaf = new THREE.Mesh(
           new THREE.SphereGeometry(r, 9, 9),
           new THREE.MeshLambertMaterial({ color: 0x2d7a3a })
@@ -438,10 +439,11 @@ function addFloorCorridorDetails(group, floorIdx, floorTheme, rng) {
 
   // Floor arrows — only on ground floor and first floor
   if (floorIdx <= 1) {
-    [-8, -4, 0, 4, 8].forEach((ax) => {
+    [-8, -4, 0, 4, 8].forEach((ax: number) => {
       const ac = document.createElement("canvas");
       ac.width = 64; ac.height = 64;
       const ctx = ac.getContext("2d");
+      if (!ctx) return;
       ctx.clearRect(0, 0, 64, 64);
       ctx.fillStyle = `#${floorTheme.accentColor.toString(16).padStart(6, "0")}44`;
       ctx.beginPath();
@@ -502,7 +504,7 @@ function addFloorCorridorDetails(group, floorIdx, floorTheme, rng) {
 }
 
 // ─── Build one floor from hospital data ─────────────────────────────────────
-function buildFloor(scene, floorIdx, floorData, floorTheme, onMeshAdded) {
+function buildFloor(scene: THREE.Scene, floorIdx: number, floorData: any, floorTheme: any, onMeshAdded: (mesh: THREE.Mesh) => void, highlightZone?: string) {
   const rng = seededRng(`floor_${floorIdx}_${floorData.label ?? floorIdx}`);
   const group = new THREE.Group();
 
@@ -523,7 +525,7 @@ function buildFloor(scene, floorIdx, floorData, floorTheme, onMeshAdded) {
     [BUILDING_W, 0.5, 0.2,  0,           0.25,  BUILDING_D / 2],
     [0.2, 0.5, BUILDING_D, -BUILDING_W / 2, 0.25, 0],
     [0.2, 0.5, BUILDING_D,  BUILDING_W / 2, 0.25, 0],
-  ].forEach(([w, h, d, x, y, z]) => {
+  ].forEach(([w, h, d, x, y, z]: number[]) => {
     const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
     wall.position.set(x, y, z);
     group.add(wall);
@@ -539,22 +541,42 @@ function buildFloor(scene, floorIdx, floorData, floorTheme, onMeshAdded) {
   const layouts = computeLayouts(floorData.zones, rng);
 
   // Zones
-  floorData.zones.forEach((zone, zi) => {
+  floorData.zones.forEach((zone: any, zi: number) => {
     const layout = layouts[zi] ?? { x: -5, z: -5, w: 5, d: 5 };
     const type   = classifyRoom(zone.name, zone.devices?.length ?? 2);
     const color  = roomColor(zone.name, zone.devices?.length ?? 2);
     const cx = layout.x + layout.w / 2;
     const cz = layout.z + layout.d / 2;
 
-    // Zone floor tint
+    // Zone floor tint — brighter if this is the highlighted zone
+    const isHighlighted = highlightZone && zone.name === highlightZone;
+    if (isHighlighted) console.log("[Map] Highlighting zone:", zone.name);
     const zoneFloor = new THREE.Mesh(
       new THREE.BoxGeometry(layout.w - 0.15, 0.06, layout.d - 0.15),
-      new THREE.MeshLambertMaterial({ color, transparent: true, opacity: 0.18 })
+      new THREE.MeshLambertMaterial({ color, transparent: true, opacity: isHighlighted ? 0.7 : 0.18 })
     );
     zoneFloor.position.set(cx, 0.12, cz);
     zoneFloor.userData = { type: "zone", zoneId: zone.id, name: zone.name, detail: `${zone.devices?.length ?? 0} devices · ${type}` };
     group.add(zoneFloor);
     onMeshAdded(zoneFloor);
+
+    // Highlight: add a glowing outline box around the zone
+    if (isHighlighted) {
+      const wallH = 1.3;
+      const glowMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.5, wireframe: false, side: THREE.DoubleSide });
+      const glowBox = new THREE.Mesh(
+        new THREE.BoxGeometry(layout.w, wallH, layout.d),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.08 })
+      );
+      glowBox.position.set(cx, wallH / 2, cz);
+      group.add(glowBox);
+      // Solid bright top edge lines
+      const edges = new THREE.EdgesGeometry(new THREE.BoxGeometry(layout.w, wallH, layout.d));
+      const lineMat = new THREE.LineBasicMaterial({ color, linewidth: 2 });
+      const wireframe = new THREE.LineSegments(edges, lineMat);
+      wireframe.position.set(cx, wallH / 2, cz);
+      group.add(wireframe);
+    }
 
     // Zone walls — height varies by floor
     const wallH = 1.1 + floorIdx * 0.05;
@@ -564,7 +586,7 @@ function buildFloor(scene, floorIdx, floorData, floorTheme, onMeshAdded) {
       [layout.w, wallH, 0.12, cx,              wallH/2, layout.z + layout.d],
       [0.12, wallH, layout.d, layout.x,        wallH/2, cz],
       [0.12, wallH, layout.d, layout.x+layout.w, wallH/2, cz],
-    ].forEach(([w, h, d, x, y, z]) => {
+    ].forEach(([w, h, d, x, y, z]: number[]) => {
       const zw = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), zwMat);
       zw.position.set(x, y, z);
       group.add(zw);
@@ -574,6 +596,7 @@ function buildFloor(scene, floorIdx, floorData, floorTheme, onMeshAdded) {
     const lc = document.createElement("canvas");
     lc.width = 512; lc.height = 64;
     const lctx = lc.getContext("2d");
+    if (!lctx) return;
     lctx.clearRect(0, 0, 512, 64);
     lctx.font = "bold 17px system-ui";
     lctx.fillStyle = `#${color.toString(16).padStart(6, "0")}`;
@@ -599,7 +622,7 @@ function buildFloor(scene, floorIdx, floorData, floorTheme, onMeshAdded) {
       ? [[-layout.w * 0.25, 0], [layout.w * 0.25, 0]]
       : [[-0.9, 0], [0.9, 0]];
 
-    zone.devices?.slice(0, 2).forEach((dev, di) => {
+    zone.devices?.slice(0, 2).forEach((dev: any, di: number) => {
       const [ox, oz] = offsets[di % offsets.length];
       const dx = cx + ox, dz = cz + layout.d * 0.3;
 
@@ -647,30 +670,37 @@ function buildFloor(scene, floorIdx, floorData, floorTheme, onMeshAdded) {
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export default function HospitalMap3D({ hospitalData }) {
-  const mountRef    = useRef(null);
-  const sceneRef    = useRef(null);
-  const rendererRef = useRef(null);
-  const cameraRef   = useRef(null);
-  const frameRef    = useRef(null);
-  const meshesRef   = useRef([]);
-  const pulsesRef   = useRef([]);
-  const floorGroupsRef = useRef([]);
+interface HospitalMap3DProps {
+  hospitalData: any;
+  initialFloor?: number;
+  highlightZone?: string;
+}
+
+export default function HospitalMap3D({ hospitalData, initialFloor = 0, highlightZone }: HospitalMap3DProps) {
+  const mountRef    = useRef<HTMLDivElement>(null);
+  const sceneRef    = useRef<THREE.Scene | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const cameraRef   = useRef<THREE.PerspectiveCamera | null>(null);
+  const frameRef    = useRef<number | null>(null);
+  const meshesRef   = useRef<THREE.Mesh[]>([]);
+  const pulsesRef   = useRef<THREE.Mesh[]>([]);
+  const floorGroupsRef = useRef<THREE.Group[]>([]);
   const isRotatingRef  = useRef(true);
   const rotYRef        = useRef(0.3);
   const isDraggingRef  = useRef(false);
   const lastXRef       = useRef(0);
 
-  const [selectedFloor, setSelectedFloor] = useState(0);
-  const [hovered,  setHovered]  = useState(null);
-  const [selected, setSelected] = useState(null);
+  const [selectedFloor, setSelectedFloor] = useState(initialFloor);
+  const router = useRouter();
+  const [hovered,  setHovered]  = useState<Record<string, any> | null>(null);
+  const [selected, setSelected] = useState<Record<string, any> | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isRotating, setIsRotating] = useState(true);
 
-  const rebuildFloor = useCallback((scene, floorIdx) => {
+  const rebuildFloor = useCallback((scene:any, floorIdx:number) => {
     meshesRef.current = [];
     pulsesRef.current = [];
-    floorGroupsRef.current.forEach(g => scene.remove(g));
+    floorGroupsRef.current.forEach((g: THREE.Group) => scene.remove(g));
     floorGroupsRef.current = [];
 
     const floorData = hospitalData.floors[floorIdx];
@@ -678,9 +708,9 @@ export default function HospitalMap3D({ hospitalData }) {
 
     const group = buildFloor(scene, floorIdx, floorData, theme, (mesh) => {
       meshesRef.current.push(mesh);
-    });
+    }, highlightZone);
     floorGroupsRef.current.push(group);
-  }, [hospitalData]);
+  }, [hospitalData, highlightZone]);
 
   useEffect(() => {
     const el = mountRef.current;
@@ -713,7 +743,7 @@ export default function HospitalMap3D({ hospitalData }) {
     const fill = new THREE.DirectionalLight(0xd0e8ff, 0.4);
     fill.position.set(-8, 10, -8);
     scene.add(fill);
-    
+
     const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 200);
     camera.position.set(0, 24, 34);
     camera.lookAt(0, 0, 0);
@@ -724,7 +754,7 @@ export default function HospitalMap3D({ hospitalData }) {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    const onMouseMove = (e) => {
+    const onMouseMove = (e: MouseEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -738,9 +768,9 @@ export default function HospitalMap3D({ hospitalData }) {
         lastXRef.current = e.clientX;
       }
     };
-    const onMouseDown = (e) => { isDraggingRef.current = true; lastXRef.current = e.clientX; isRotatingRef.current = false; setIsRotating(false); };
+    const onMouseDown = (e: MouseEvent) => { isDraggingRef.current = true; lastXRef.current = e.clientX; isRotatingRef.current = false; setIsRotating(false); };
     const onMouseUp   = ()  => { isDraggingRef.current = false; };
-    const onClick = (e) => {
+    const onClick = (e: MouseEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -758,7 +788,7 @@ export default function HospitalMap3D({ hospitalData }) {
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       t += 0.016;
-      pulsesRef.current.forEach((p) => {
+      pulsesRef.current.forEach((p: any) => {
         const s = 1 + Math.abs(Math.sin(t * 1.5 + p.userData.phase)) * 1.4;
         p.scale.set(s, s, s);
         p.material.opacity = 0.7 - Math.abs(Math.sin(t * 1.5 + p.userData.phase)) * 0.6;
@@ -774,7 +804,7 @@ export default function HospitalMap3D({ hospitalData }) {
     animate();
 
     return () => {
-      cancelAnimationFrame(frameRef.current);
+      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
       renderer.domElement.removeEventListener("mousemove", onMouseMove);
       renderer.domElement.removeEventListener("mousedown", onMouseDown);
       renderer.domElement.removeEventListener("click", onClick);
@@ -788,11 +818,17 @@ export default function HospitalMap3D({ hospitalData }) {
     if (sceneRef.current) rebuildFloor(sceneRef.current, selectedFloor);
   }, [selectedFloor, rebuildFloor]);
 
-  if (!hospitalData) return null;
-  const currentFloor  = hospitalData.floors[selectedFloor];
-  const totalDevices  = currentFloor.zones.reduce((a, z) => a + (z.devices?.length ?? 0), 0);
-  const onlineDevices = currentFloor.zones.reduce((a, z) => a + (z.devices?.filter(d => d.status === "ONLINE").length ?? 0), 0);
-  const theme = FLOOR_THEMES[selectedFloor % FLOOR_THEMES.length];
+  if (!hospitalData || !Array.isArray(hospitalData.floors) || hospitalData.floors.length === 0) return null;
+
+  // Clamp in case selectedFloor is out of range
+  const floorIdx     = Math.min(selectedFloor, hospitalData.floors.length - 1);
+  const currentFloor = hospitalData.floors[floorIdx];
+  if (!currentFloor) return null;
+
+  const zones         = Array.isArray(currentFloor.zones) ? currentFloor.zones : [];
+  const totalDevices  = zones.reduce((a:any, z:any) => a + (z.devices?.length ?? 0), 0);
+  const onlineDevices = zones.reduce((a:any, z:any) => a + (z.devices?.filter((d:any) => d.status === "ONLINE").length ?? 0), 0);
+  const theme = FLOOR_THEMES[floorIdx % FLOOR_THEMES.length];
 
   return (
     <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif", background: "var(--color-background-tertiary)", borderRadius: 16, overflow: "hidden", border: "0.5px solid var(--color-border-tertiary)" }}>
@@ -802,7 +838,7 @@ export default function HospitalMap3D({ hospitalData }) {
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--color-background-info)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🏥</div>
           <div>
             <div style={{ fontWeight: 500, fontSize: 14, color: "var(--color-text-primary)" }}>{hospitalData.name}</div>
-            <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>3D Floor Map · {currentFloor.zones.length} zones · Floor theme: {theme.name}</div>
+            <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>3D Floor Map · {zones.length} zones · Floor theme: {theme.name}</div>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -819,7 +855,7 @@ export default function HospitalMap3D({ hospitalData }) {
 
       {/* Floor tabs */}
       <div style={{ display: "flex", overflowX: "auto", padding: "0 20px", background: "var(--color-background-primary)", borderBottom: "0.5px solid var(--color-border-tertiary)" }}>
-        {hospitalData.floors.map((f, i) => (
+        {hospitalData.floors.map((f:any, i:any) => (
           <button key={i} onClick={() => setSelectedFloor(i)}
             style={{ whiteSpace: "nowrap", padding: "8px 16px", fontSize: 12, fontWeight: 500, cursor: "pointer", background: "none", border: "none",
               borderBottom: selectedFloor === i ? `2px solid #${FLOOR_THEMES[i % FLOOR_THEMES.length].accentColor.toString(16)}` : "2px solid transparent",
@@ -835,7 +871,7 @@ export default function HospitalMap3D({ hospitalData }) {
 
         {/* Room type legend */}
         <div style={{ position: "absolute", top: 12, left: 12, display: "flex", flexDirection: "column", gap: 3, maxHeight: 480, overflowY: "auto" }}>
-          {currentFloor.zones.map((z, zi) => {
+          {zones.map((z:any, zi:any) => {
             const type = classifyRoom(z.name, z.devices?.length ?? 2);
             const color = roomColor(z.name, z.devices?.length ?? 2);
             return (
@@ -870,15 +906,25 @@ export default function HospitalMap3D({ hospitalData }) {
       </div>
 
       {selected && (
-        <div style={{ padding: "12px 20px", borderTop: "0.5px solid var(--color-border-tertiary)", background: "var(--color-background-primary)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: selected.status === "ONLINE" ? "#1D9E75" : "#E24B4A" }} />
-            <div>
-              <div style={{ fontWeight: 500, fontSize: 13, color: "var(--color-text-primary)" }}>{selected.name}</div>
+        <div style={{ padding: "12px 20px", borderTop: "0.5px solid var(--color-border-tertiary)", background: "var(--color-background-primary)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: selected.status === "ONLINE" ? "#1D9E75" : "#E24B4A" }} />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 500, fontSize: 13, color: "var(--color-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selected.name}</div>
               <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>{selected.detail} · {selected.type}</div>
             </div>
           </div>
-          <button onClick={() => setSelected(null)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 6, border: "0.5px solid var(--color-border-tertiary)", background: "none", cursor: "pointer", color: "var(--color-text-secondary)" }}>✕</button>
+          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+            {selected.type === "device" && selected.deviceId && (
+              <a
+                href={`/devices?highlight=${selected.deviceId}`}
+                style={{ fontSize: 12, fontWeight: 500, padding: "5px 12px", borderRadius: 6, border: "0.5px solid var(--color-border-tertiary)", background: "var(--color-background-secondary)", cursor: "pointer", color: "var(--color-text-primary)", display: "flex", alignItems: "center", gap: 5, textDecoration: "none" }}
+              >
+                <span style={{ fontSize: 13 }}>↗</span> View device
+              </a>
+            )}
+            <button onClick={() => setSelected(null)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 6, border: "0.5px solid var(--color-border-tertiary)", background: "none", cursor: "pointer", color: "var(--color-text-secondary)" }}>✕</button>
+          </div>
         </div>
       )}
     </div>
