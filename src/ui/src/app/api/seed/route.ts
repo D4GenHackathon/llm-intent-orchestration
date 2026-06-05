@@ -46,6 +46,8 @@ export async function POST() {
       ["ICU - Intensive Care", "Emergency - Trauma", "Cardiology - Heart"],
       ["Neurology - Brain", "Orthopedics - Bones", "General - Ward"],
     ];
+    const rooms = []
+    
 
     const sensorConfigs = [
       { type: "HEART_RATE", unit: "bpm", min: 50, max: 120, base: 75 },
@@ -142,7 +144,14 @@ export async function POST() {
               });
             }
 
-            await prisma.sensorReading.createMany({ data: readings });
+            // await prisma.sensorReading.createMany({ data: readings });
+            const chunkSize = 500;
+
+            for (let i = 0; i < readings.length; i += chunkSize) {
+              await prisma.sensorReading.createMany({
+                data: readings.slice(i, i + chunkSize),
+              });
+            }
 
             // Create some triggered alerts
             if (Math.random() > 0.5) {
@@ -165,8 +174,19 @@ export async function POST() {
     }
 
     return NextResponse.json({ success: true, message: "Seed data created successfully" });
+  // } catch (error) {
+  //   console.error("Seed error:", error);
+  //   return NextResponse.json({ error: "Failed to seed data" }, { status: 500 });
+  // }
   } catch (error) {
-    console.error("Seed error:", error);
-    return NextResponse.json({ error: "Failed to seed data" }, { status: 500 });
+    console.error("🔥 FULL ERROR:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to seed data",
+        details: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      { status: 500 }
+    );
   }
 }
