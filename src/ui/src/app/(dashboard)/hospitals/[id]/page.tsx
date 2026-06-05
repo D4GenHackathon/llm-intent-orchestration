@@ -45,58 +45,68 @@ interface Hospital {
 // Adapt API response to the shape HospitalMap3D expects.
 // The component groups devices into floors — since the API has flat zones,
 // we split them into chunks of 4 per floor.
+const ZONE_COLORS: number[] = [
+  0xe05252, 0xe07d35, 0x5a8ae0, 0x4eb88a,
+  0x9b59b6, 0x2ecc71, 0xf39c12, 0x1abc9c,
+];
+ 
+// 8 zones in a 4-column × 2-row grid matching HospitalMap3D's ZONE_LAYOUTS
+const ZONE_LAYOUTS = [
+  { x: -13, z: -7, w: 6, d: 6 },
+  { x: -6,  z: -7, w: 6, d: 6 },
+  { x:  1,  z: -7, w: 6, d: 6 },
+  { x:  8,  z: -7, w: 6, d: 6 },
+  { x: -13, z:  2, w: 6, d: 6 },
+  { x: -6,  z:  2, w: 6, d: 6 },
+  { x:  1,  z:  2, w: 6, d: 6 },
+  { x:  8,  z:  2, w: 6, d: 6 },
+];
+ 
+const DEVICE_OFFSETS = [[-1.5, -1.5], [1.5, -1.5]];
+ 
 function toMapData(hospital: Hospital) {
-  const ZONES_PER_FLOOR = 4;
-  const ZONE_COLORS: Record<string, number> = {
-    0: 0xe05252, 1: 0xe07d35, 2: 0x5a8ae0, 3: 0x4eb88a,
-    4: 0x9b59b6, 5: 0x2ecc71, 6: 0xf39c12, 7: 0x1abc9c,
-  };
-  const ZONE_LAYOUTS = [
-    { x: -5, z: -3, w: 5, d: 4 },
-    { x:  1, z: -3, w: 5, d: 4 },
-    { x: -5, z:  2, w: 5, d: 4 },
-    { x:  1, z:  2, w: 5, d: 4 },
-  ];
-  const DEVICE_OFFSETS = [
-    [[-0.9, -0.5], [0.9,  0.5]],
-    [[-0.9,  0.5], [0.9, -0.5]],
-    [[ 0.0, -0.8], [0.0,  0.8]],
-    [[-0.7, -0.7], [0.7,  0.7]],
-  ];
-
-  const floors = [];
-  for (let fi = 0; fi * ZONES_PER_FLOOR < hospital.zones.length; fi++) {
-    const chunk = hospital.zones.slice(fi * ZONES_PER_FLOOR, (fi + 1) * ZONES_PER_FLOOR);
-    floors.push({
-      level: fi,
-      label: fi === 0 ? "Ground Floor" : `Floor ${fi}`,
-      zones: chunk.map((zone, zi) => {
-        const layout = ZONE_LAYOUTS[zi % ZONE_LAYOUTS.length];
-        const offsets = DEVICE_OFFSETS[zi % DEVICE_OFFSETS.length];
-        return {
-          id: zone.id,
-          name: zone.name,
-          type: "general",
-          x: layout.x,
-          z: layout.z,
-          w: layout.w,
-          d: layout.d,
-          color: ZONE_COLORS[zi % 8],
-          devices: zone.devices.slice(0, 4).map((dev, di) => {
-            const [ox, oz] = offsets[di % offsets.length];
-            return {
-              id: dev.id,
-              name: dev.name,
-              status: dev.status,
-              x: layout.x + layout.w / 2 + ox,
-              z: layout.z + layout.d / 2 + oz,
-            };
-          }),
-        };
-      }),
-    });
-  }
-
+  const ZONES_PER_FLOOR = 8;
+ 
+  // Group flat zones into floors of 8
+  const floorMap: Map<string, typeof hospital.zones> = new Map();
+  hospital.zones.forEach((zone) => {
+    // Zone names are seeded as "Ground Floor – Reception & Triage" etc.
+    const dashIdx = zone.name.indexOf(" – ");
+    const floorLabel = dashIdx > -1 ? zone.name.slice(0, dashIdx) : "Ground Floor";
+    if (!floorMap.has(floorLabel)) floorMap.set(floorLabel, []);
+    floorMap.get(floorLabel)!.push(zone);
+  });
+ 
+  const floors = Array.from(floorMap.entries()).map(([label, zones], fi) => ({
+    level: fi,
+    label,
+    zones: zones.slice(0, ZONES_PER_FLOOR).map((zone, zi) => {
+      const layout = ZONE_LAYOUTS[zi % ZONE_LAYOUTS.length];
+      return {
+        id: zone.id,
+        name: zone.name.includes(" – ") ? zone.name.split(" – ")[1] : zone.name,
+        type: "general",
+        x: layout.x,
+        z: layout.z,
+        w: layout.w,
+        d: layout.d,
+        color: ZONE_COLORS[zi % ZONE_COLORS.length],
+        devices: zone.devices.slice(0, 2).map((dev, di) => {
+          const [ox, oz] = DEVICE_OFFSETS[di % DEVICE_OFFSETS.length];
+          const cx = layout.x + layout.w / 2;
+          const cz = layout.z + layout.d / 2;
+          return {
+            id: dev.id,
+            name: dev.name,
+            status: dev.status,
+            x: cx + ox,
+            z: cz + oz,
+          };
+        }),
+      };
+    }),
+  }));
+ 
   return { name: hospital.name, floors };
 }
 
