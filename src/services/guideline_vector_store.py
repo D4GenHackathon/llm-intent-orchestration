@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 from typing import Any
 
 import joblib
@@ -13,6 +14,25 @@ from sklearn.preprocessing import normalize
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_VECTOR_STORE_DIR = PROJECT_ROOT / "data" / "guidelines" / "vector_store"
+STOPWORDS = {
+    "about",
+    "and",
+    "are",
+    "clinical",
+    "context",
+    "does",
+    "for",
+    "from",
+    "guideline",
+    "recommend",
+    "recommendations",
+    "retrieve",
+    "say",
+    "the",
+    "what",
+    "when",
+    "with",
+}
 
 
 class GuidelineVectorStore:
@@ -43,7 +63,9 @@ class GuidelineVectorStore:
             return []
 
         scores = self.embeddings @ query_embedding
-        top_indices = np.argsort(scores)[::-1][:top_k]
+        candidate_count = min(len(scores), max(top_k * 20, top_k))
+        candidate_indices = np.argsort(scores)[::-1][:candidate_count]
+        top_indices = self._rerank_indices(query, scores, candidate_indices)[:top_k]
         results: list[dict[str, Any]] = []
         for index in top_indices:
             score = float(scores[index])
@@ -53,6 +75,58 @@ class GuidelineVectorStore:
             record["score"] = round(score, 6)
             results.append(record)
         return results
+
+    def _rerank_indices(self, query: str, scores: np.ndarray, candidate_indices: np.ndarray) -> list[int]:
+        query_terms = self._content_terms(query)
+        query_phrases = self._query_phrases(query)
+        query_guidelines = self._guideline_mentions(query)
+
+        ranked: list[tuple[float, int]] = []
+        for raw_index in candidate_indices:
+            index = int(raw_index)
+            record = self.metadata[index]
+            text = str(record.get("text", ""))
+            metadata = record.get("metadata", {})
+            if not isinstance(metadata, dict):
+                metadata = {}
+            text_lower = text.casefold()
+            record_terms = self._content_terms(text)
+
+            phrase_hits = sum(1 for phrase in query_phrases if phrase in text_lower)
+            term_overlap = len(query_terms & record_terms) / len(query_terms) if query_terms else 0.0
+            guideline = self._normalize_guideline_name(str(metadata.get("guideline") or metadata.get("source") or ""))
+            guideline_match = 1.0 if guideline and guideline in query_guidelines else 0.0
+            guideline_penalty = -0.18 if query_guidelines and guideline and guideline not in query_guidelines else 0.0
+            rerank_score = (
+                float(scores[index])
+                + (0.08 * phrase_hits)
+                + (0.12 * term_overlap)
+                + (0.16 * guideline_match)
+                + guideline_penalty
+            )
+            ranked.append((rerank_score, index))
+        ranked.sort(key=lambda item: item[0], reverse=True)
+        return [index for _, index in ranked]
+
+    def _content_terms(self, text: str) -> set[str]:
+        return {
+            token
+            for token in re.findall(r"[a-z0-9]+", text.casefold())
+            if len(token) > 2 and token not in STOPWORDS
+        }
+
+    def _query_phrases(self, query: str) -> list[str]:
+        phrases = [part.strip().casefold() for part in re.split(r"[,;:?]", query) if part.strip()]
+        return [phrase for phrase in phrases if len(self._content_terms(phrase)) >= 2]
+
+    def _guideline_mentions(self, query: str) -> set[str]:
+        return {
+            self._normalize_guideline_name(token)
+            for token in re.findall(r"\b(?:NEWS2|NICE[_\s-]?[A-Z0-9]+)\b", query, flags=re.IGNORECASE)
+        }
+
+    def _normalize_guideline_name(self, name: str) -> str:
+        return re.sub(r"[\s_-]+", "", name.casefold())
 
     def _load(self) -> None:
         if self._loaded:
