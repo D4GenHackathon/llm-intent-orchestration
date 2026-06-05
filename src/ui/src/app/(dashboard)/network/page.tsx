@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,15 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Network, Lock, Users, Zap, AlertCircle, MessageCircle, X } from "lucide-react";
-import ChatBot from "react-chatbotify";
+import { Network, Lock, Users, Zap, AlertCircle, MessageCircle } from "lucide-react";
 
 interface NetworkPolicy {
   id: string;
@@ -40,6 +32,147 @@ interface SDNController {
   status: "online" | "offline";
   connectedDevices: number;
   uptime: string;
+}
+
+interface ChatMessage {
+  role: "user" | "assistant";
+  message: string;
+  timestamp: string;
+}
+
+// Network Chatbot Component
+function NetworkChatbot({ sessionId }: { sessionId: string }) {
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      role: "assistant",
+      message: "Welcome to Network Management Agent! I can help you configure your bioinstitution IOT device network using natural language, our management mainly based on Software-Defined Networking (SDN). What would you like to do?",
+      timestamp: new Date().toISOString(),
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return;
+
+    // Add user message
+    const userMessage: ChatMessage = {
+      role: "user",
+      message: input,
+      timestamp: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:8000/api/network/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          message: input,
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        message: data.message || "No response received",
+        timestamp: data.timestamp || new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMsg: ChatMessage = {
+        role: "assistant",
+        message: `Error: ${errorMessage}`,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-96 rounded-lg border bg-background">
+      {/* Chat Header */}
+      <div className="px-4 py-3 border-b flex items-center gap-2 bg-muted">
+        <MessageCircle className="h-5 w-5" />
+        <h3 className="font-semibold">Network Assistant</h3>
+      </div>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {messages.map((msg, idx) => (
+          <div
+            key={msg.timestamp + idx}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-xs rounded-lg px-3 py-2 text-sm ${
+                msg.role === "user"
+                  ? "bg-blue-500 text-white"
+                  : "bg-muted text-foreground border"
+              }`}
+            >
+              <p className="whitespace-pre-wrap break-keep">{msg.message}</p>
+            </div>
+          </div>
+        ))}
+        {loading && (
+          <div className="flex justify-start">
+            <div className="bg-muted text-foreground border rounded-lg px-3 py-2">
+              <p className="text-sm">Thinking...</p>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input Area */}
+      <div className="px-4 py-3 border-t flex gap-2 bg-muted/30">
+        <Input
+          placeholder="Ask about network configuration..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage();
+            }
+          }}
+          disabled={loading}
+          className="text-sm"
+        />
+        <Button
+          onClick={sendMessage}
+          disabled={loading || !input.trim()}
+          size="sm"
+          className="px-3"
+        >
+          <MessageCircle className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export default function NetworkManagementPage() {
@@ -168,7 +301,7 @@ export default function NetworkManagementPage() {
             // Update streaming message with progress
             const dots = ".".repeat((pollCount % 3) + 1);
             await params.streamMessage(
-              `⏳ Processing${dots} (${pollCount}s elapsed)`
+              `Processing${dots} (${pollCount}s elapsed)`
             );
           }
         } catch (statusError) {
@@ -185,23 +318,9 @@ export default function NetworkManagementPage() {
       await params.endStreamMessage();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      await params.injectMessage(`❌ Error: ${errorMessage}`);
+      await params.injectMessage(`Error: ${errorMessage}`);
       await params.endStreamMessage();
     }
-  };
-
-  const chatbotFlow = {
-    start: {
-      message: "Welcome to Network Management Agent in Hospital Ecosystem! I can help you configure your SDN network using natural language. What would you like to do?",
-      path: "network_config",
-    },
-    network_config: {
-      message: async (params: any) => {
-        // Process user query through network agent
-        await networkAgentStream(params);
-      },
-      path: "network_config", // Loop back for more configurations
-    },
   };
 
   // Check if user is admin
@@ -467,17 +586,7 @@ export default function NetworkManagementPage() {
       {/* Floating Network Assistant Chatbot */}
       {isClient && (
         <div className="bg-card rounded-lg border shadow-sm p-6">
-          <ChatBot
-            flow={chatbotFlow}
-            settings={{
-              general: {
-                embedded: false,
-              },
-              chatHistory: {
-                storageKey: "hospital_chat_history",
-              },
-            }}
-          />
+          <NetworkChatbot sessionId={`user-${session?.user?.email || "guest"}`} />
         </div>
       )}
     </div>
