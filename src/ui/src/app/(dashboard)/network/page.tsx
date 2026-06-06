@@ -51,6 +51,9 @@ function NetworkChatbot({ sessionId }: { sessionId: string }) {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [lastMessage, setLastMessage] = useState<string>("");
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editText, setEditText] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -61,54 +64,127 @@ function NetworkChatbot({ sessionId }: { sessionId: string }) {
     scrollToBottom();
   }, [messages]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return;
+  const sendMessage = async (messageToSend?: string) => {
+    const messageText = messageToSend || input;
+    if (!messageText.trim() || loading) return;
 
     // Add user message
     const userMessage: ChatMessage = {
       role: "user",
-      message: input,
+      message: messageText,
       timestamp: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    if (!messageToSend) setInput("");
+    setLastMessage(messageText);
     setLoading(true);
 
     try {
       const response = await fetch("http://localhost:8000/api/network/chat", {
         method: "POST",
         headers: {
+          "accept": "application/json",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          session_id: sessionId,
-          message: input,
+          model: "llm-agent-ollama",
+          messages: [
+            {
+              role: "user",
+              content: messageText,
+            },
+          ],
+          temperature: 0,
           stream: false,
+          additionalProp1: {},
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.statusText}`);
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log("API Response:", data); // Debug log
+      // Parse response format
+      const rawContent = data.choices?.[0]?.message?.content || data.message || "No response received";
+      
+      // Parse tool response format
+      const toolMatch = rawContent.match(/^(\w+):\s*(\{[\s\S]*\})$/);
+      let assistantContent = rawContent;
+      
+      if (toolMatch) {
+        const toolName = toolMatch[1];
+        let dataString = toolMatch[2];
+        try {
+          // Formalize JSON format
+          const jsonString = dataString.replace(/'/g, '"');
+          const toolData = JSON.parse(jsonString);
+          
+          // Beautify the response
+          assistantContent = `Tool Used: ${toolName}\n\n`;
+          assistantContent += "Network Data:\n";
+          Object.entries(toolData).forEach(([key, value]) => {
+            assistantContent += `• ${key}: ${value}\n`;
+          });
+        } catch (e) {
+          console.error("Parse error:", e);
+          // If parsing fails, use raw content
+          assistantContent = rawContent;
+        }
+      }
+      
       const assistantMessage: ChatMessage = {
         role: "assistant",
-        message: data.message || "No response received",
-        timestamp: data.timestamp || new Date().toISOString(),
+        message: assistantContent,
+        timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       const errorMsg: ChatMessage = {
         role: "assistant",
-        message: `Error: ${errorMessage}`,
+        message: `Error: ${errorMessage}\n\n Click the reload button below to retry.`,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    if (lastMessage) {
+      sendMessage(lastMessage);
+    }
+  };
+
+  const handleEdit = (index: number, message: string) => {
+    setEditingIndex(index);
+    setEditText(message);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
+    setEditText("");
+  };
+
+  const handleSubmitEdit = (index: number) => {
+    if (editText.trim()) {
+      // Remove the edited message and all responses after it
+      const newMessages = messages.slice(0, index);
+      setMessages(newMessages);
+      setEditingIndex(null);
+      
+      // Send the modified message
+      sendMessage(editText);
+    }
+  };
+
+  const handleDelete = (index: number) => {
+    // Remove the message and all responses after it
+    const newMessages = messages.slice(0, index);
+    setMessages(newMessages);
   };
 
   return (
@@ -126,15 +202,80 @@ function NetworkChatbot({ sessionId }: { sessionId: string }) {
             key={msg.timestamp + idx}
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
-            <div
-              className={`max-w-xs rounded-lg px-3 py-2 text-sm ${
-                msg.role === "user"
-                  ? "bg-blue-500 text-white"
-                  : "bg-muted text-foreground border"
-              }`}
-            >
-              <p className="whitespace-pre-wrap break-keep">{msg.message}</p>
-            </div>
+            {editingIndex === idx ? (
+              <div className="flex flex-col gap-2 max-w-xs">
+                <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  className="border rounded-lg px-3 py-2 text-sm resize-none"
+                  rows={3}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleSubmitEdit(idx)}
+                    disabled={loading || !editText.trim()}
+                    size="sm"
+                    className="flex-1"
+                  >
+                    Send
+                  </Button>
+                  <Button
+                    onClick={handleCancelEdit}
+                    disabled={loading}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1">
+                <div
+                  className={`max-w-xs rounded-lg px-3 py-2 text-sm ${
+                    msg.role === "user"
+                      ? "bg-blue-500 text-white"
+                      : "bg-muted text-foreground border"
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap break-keep">{msg.message}</p>
+                  {msg.message.includes("Error:") && msg.role === "assistant" && (
+                    <Button
+                      onClick={handleRetry}
+                      disabled={loading}
+                      size="sm"
+                      variant="outline"
+                      className="mt-2 text-xs"
+                    >
+                      🔄 Retry
+                    </Button>
+                  )}
+                </div>
+                {msg.role === "user" && (
+                  <div className="flex gap-1">
+                    <Button
+                      onClick={() => handleEdit(idx, msg.message)}
+                      disabled={loading}
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs h-6 px-2"
+                    >
+                      ✏️ Edit
+                    </Button>
+                    <Button
+                      onClick={() => handleDelete(idx)}
+                      disabled={loading}
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs h-6 px-2 text-destructive"
+                    >
+                      🗑️ Delete
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ))}
         {loading && (
@@ -163,7 +304,7 @@ function NetworkChatbot({ sessionId }: { sessionId: string }) {
           className="text-sm"
         />
         <Button
-          onClick={sendMessage}
+          onClick={() => sendMessage()}
           disabled={loading || !input.trim()}
           size="sm"
           className="px-3"
@@ -589,6 +730,42 @@ export default function NetworkManagementPage() {
           <NetworkChatbot sessionId={`user-${session?.user?.email || "guest"}`} />
         </div>
       )}
+
+      {/* ONOS UI Integration */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>ONOS Network Dashboard</CardTitle>
+              <CardDescription>
+                Real-time network topology and management interface
+              </CardDescription>
+            </div>
+            <Button
+              onClick={() => window.open("http://localhost:8181/onos/ui", "_blank")}
+              className="ml-4"
+            >
+              🔗 Open in New Window
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground space-y-2">
+            <p>Click the button above to open the ONOS network dashboard in a new window.</p>
+            <p>
+              <strong>Login Credentials:</strong>
+            </p>
+            <ul className="list-disc list-inside space-y-1">
+              <li><strong>Username:</strong> onos</li>
+              <li><strong>Password:</strong> rocks</li>
+            </ul>
+            <p className="mt-4 text-xs text-muted-foreground">
+              Note: Due to browser security restrictions, the ONOS UI cannot be embedded directly. 
+              Please open it in a new window to view the network topology and management interface.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -44,10 +44,12 @@ def build_tfidf_embeddings(chunks: list[dict[str, Any]], output_dir: Path) -> tu
     texts = [str(chunk["text"]) for chunk in chunks]
     vectorizer = TfidfVectorizer(
         lowercase=True,
+        strip_accents="unicode",
         stop_words="english",
-        ngram_range=(1, 2),
-        max_features=20000,
+        ngram_range=(1, 3),
+        max_features=60000,
         min_df=1,
+        sublinear_tf=True,
         norm="l2",
     )
     matrix = vectorizer.fit_transform(texts)

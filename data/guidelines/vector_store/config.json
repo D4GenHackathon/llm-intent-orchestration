@@ -5,6 +5,6 @@
   "chunks_path": "data/guidelines/guideline_chunks.jsonl",
   "embeddings_path": "embeddings.npy",
   "metadata_path": "metadata.jsonl",
-  "embedding_dim": 20000,
-  "chunk_count": 134
+  "embedding_dim": 50743,
+  "chunk_count": 234
 }
