@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "src/components/hospitals/HospitalMap3D.jsx"  ],
   "exclude": ["node_modules"]
 }

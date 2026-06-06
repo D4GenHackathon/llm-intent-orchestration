@@ -12,7 +12,10 @@ export function AlertBanner() {
   useEffect(() => {
     fetch("/api/alerts?acknowledged=false&limit=5")
       .then((res) => res.json())
-      .then(setAlerts)
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data.alerts ?? []);
+        setAlerts(list);
+      })
       .catch(() => {});
   }, []);
 

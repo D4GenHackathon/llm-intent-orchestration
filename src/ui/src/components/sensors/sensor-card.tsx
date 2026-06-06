@@ -1,54 +1,10 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Heart, 
-  Droplets, 
-  Zap, 
-  Wind, 
-  Thermometer, 
-  Gauge,
-  Brain,
-  Activity
-} from "lucide-react";
-import { type LucideIcon } from "lucide-react";
-
-const sensorIcons: Record<string, LucideIcon> = {
-  HEART_RATE: Heart,
-  SPO2_LEVEL: Droplets,
-  ECG_SIGNAL: Zap,
-  RESPIRATION_RATE: Wind,
-  BODY_TEMPERATURE: Thermometer,
-  BLOOD_PRESSURE_SYS: Gauge,
-  BLOOD_PRESSURE_DIA: Gauge,
-  BLOOD_GLUCOSE: Activity,
-  EEG_ALPHA_POWER: Brain,
-  EEG_BETA_POWER: Brain,
-  EMG_SIGNAL_STRENGTH: Activity,
-  TEMPERATURE: Thermometer,
-  HUMIDITY: Droplets,
-  SOIL_MOISTURE: Activity,
-  LIGHT: Zap,
-  CO2: Wind,
-};
-
-const sensorConfig: Record<string, { bgColor: string; textColor: string; borderColor: string }> = {
-  HEART_RATE: { bgColor: "bg-red-50", textColor: "text-red-600", borderColor: "border-red-200" },
-  SPO2_LEVEL: { bgColor: "bg-blue-50", textColor: "text-blue-600", borderColor: "border-blue-200" },
-  ECG_SIGNAL: { bgColor: "bg-purple-50", textColor: "text-purple-600", borderColor: "border-purple-200" },
-  RESPIRATION_RATE: { bgColor: "bg-cyan-50", textColor: "text-cyan-600", borderColor: "border-cyan-200" },
-  BODY_TEMPERATURE: { bgColor: "bg-orange-50", textColor: "text-orange-600", borderColor: "border-orange-200" },
-  BLOOD_PRESSURE_SYS: { bgColor: "bg-rose-50", textColor: "text-rose-600", borderColor: "border-rose-200" },
-  BLOOD_PRESSURE_DIA: { bgColor: "bg-pink-50", textColor: "text-pink-600", borderColor: "border-pink-200" },
-  BLOOD_GLUCOSE: { bgColor: "bg-amber-50", textColor: "text-amber-600", borderColor: "border-amber-200" },
-  EEG_ALPHA_POWER: { bgColor: "bg-indigo-50", textColor: "text-indigo-600", borderColor: "border-indigo-200" },
-  EEG_BETA_POWER: { bgColor: "bg-violet-50", textColor: "text-violet-600", borderColor: "border-violet-200" },
-  EMG_SIGNAL_STRENGTH: { bgColor: "bg-lime-50", textColor: "text-lime-600", borderColor: "border-lime-200" },
-  TEMPERATURE: { bgColor: "bg-red-50", textColor: "text-red-600", borderColor: "border-red-200" },
-  HUMIDITY: { bgColor: "bg-blue-50", textColor: "text-blue-600", borderColor: "border-blue-200" },
-  SOIL_MOISTURE: { bgColor: "bg-green-50", textColor: "text-green-600", borderColor: "border-green-200" },
-  LIGHT: { bgColor: "bg-yellow-50", textColor: "text-yellow-600", borderColor: "border-yellow-200" },
-  CO2: { bgColor: "bg-slate-50", textColor: "text-slate-600", borderColor: "border-slate-200" },
-};
 
 interface SensorCardProps {
   sensor: {
@@ -64,34 +20,116 @@ interface SensorCardProps {
   };
 }
 
+const TYPE_COLORS: Record<string, string> = {
+  TEMPERATURE:   "text-orange-500",
+  HUMIDITY:      "text-blue-500",
+  SOIL_MOISTURE: "text-green-500",
+  LIGHT:         "text-yellow-500",
+  CO2:           "text-purple-500",
+};
+
+const TYPE_BG: Record<string, string> = {
+  TEMPERATURE:   "bg-orange-50 border-orange-100",
+  HUMIDITY:      "bg-blue-50 border-blue-100",
+  SOIL_MOISTURE: "bg-green-50 border-green-100",
+  LIGHT:         "bg-yellow-50 border-yellow-100",
+  CO2:           "bg-purple-50 border-purple-100",
+};
+
+interface ActiveAlert {
+  id: string;
+  severity: string;
+  message: string;
+}
+
 export function SensorCard({ sensor }: SensorCardProps) {
-  const Icon = sensorIcons[sensor.type] || Thermometer;
-  const config = sensorConfig[sensor.type] || sensorConfig.TEMPERATURE;
-  const latestReading = sensor.readings[0];
+  const [alerts, setAlerts] = useState<ActiveAlert[]>([]);
+
+  const latestReading = sensor.readings?.[sensor.readings.length - 1];
+  const latestValue   = latestReading?.value;
+
+  useEffect(() => {
+    // Fetch active alerts for this specific sensor
+    fetch(`/api/alerts?sensorId=${sensor.id}&acknowledged=false&limit=5`)
+      .then((r) => r.json())
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data.alerts ?? []);
+        setAlerts(list.filter((a: any) => !a.acknowledged));
+      })
+      .catch(() => {});
+  }, [sensor.id]);
+
+  const hasCritical = alerts.some((a) => a.severity === "CRITICAL");
+  const hasHigh     = alerts.some((a) => a.severity === "HIGH");
+  const hasAlert    = alerts.length > 0;
+  const worstAlert  = hasCritical ? "CRITICAL" : hasHigh ? "HIGH" : alerts[0]?.severity;
+
+  const alertBorderClass = hasCritical
+    ? "border-red-400 ring-1 ring-red-300"
+    : hasHigh
+    ? "border-orange-400 ring-1 ring-orange-300"
+    : hasAlert
+    ? "border-yellow-400"
+    : "";
 
   return (
-    <Link href={`/sensors/${sensor.id}`}>
-      <Card className={`hover:shadow-lg transition-all cursor-pointer border-2 ${config.bgColor} ${config.borderColor}`}>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium">{sensor.name}</CardTitle>
-            <Icon className={`h-5 w-5 ${config.textColor}`} />
+    <Link href={`/sensors/${sensor.id}`} className="block group">
+      <Card className={`transition-all hover:shadow-md ${alertBorderClass} ${hasAlert ? "" : TYPE_BG[sensor.type] ?? ""}`}>
+        <CardContent className="p-4 space-y-3">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="font-medium text-sm truncate">{sensor.name}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {sensor.device.zone.hospital.name} · {sensor.device.name}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {hasAlert && (
+                <span className={`flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded ${
+                  hasCritical ? "bg-red-100 text-red-700" :
+                  hasHigh     ? "bg-orange-100 text-orange-700" :
+                                "bg-yellow-100 text-yellow-700"
+                }`}>
+                  <AlertTriangle className="h-3 w-3" />
+                  {worstAlert}
+                </span>
+              )}
+              <Badge variant="outline" className={`text-xs ${TYPE_COLORS[sensor.type] ?? ""}`}>
+                {sensor.type.replace("_", " ")}
+              </Badge>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {sensor.device.zone.hospital.name} / {sensor.device.zone.name}
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-bold ${config.textColor}`}>
-            {latestReading
-              ? `${latestReading.value.toFixed(1)} ${sensor.unit}`
-              : "No data"}
+
+          {/* Value */}
+          <div className={`text-2xl font-bold tabular-nums ${
+            hasCritical ? "text-red-600" :
+            hasHigh     ? "text-orange-600" :
+                          (TYPE_COLORS[sensor.type] ?? "text-foreground")
+          }`}>
+            {latestValue !== undefined ? latestValue.toFixed(1) : "—"}
+            <span className="text-sm font-normal text-muted-foreground ml-1">{sensor.unit}</span>
           </div>
-          {latestReading && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {new Date(latestReading.timestamp).toLocaleString()}
-            </p>
+
+          {/* Alert messages */}
+          {hasAlert && (
+            <div className="space-y-1">
+              {alerts.slice(0, 2).map((alert) => (
+                <p key={alert.id} className={`text-xs rounded px-2 py-1 ${
+                  alert.severity === "CRITICAL" ? "bg-red-50 text-red-700" :
+                  alert.severity === "HIGH"     ? "bg-orange-50 text-orange-700" :
+                                                  "bg-yellow-50 text-yellow-700"
+                }`}>
+                  {alert.message}
+                </p>
+              ))}
+            </div>
           )}
+
+          {/* Location */}
+          <p className="text-xs text-muted-foreground truncate">
+            {sensor.device.zone.name}
+          </p>
         </CardContent>
       </Card>
     </Link>

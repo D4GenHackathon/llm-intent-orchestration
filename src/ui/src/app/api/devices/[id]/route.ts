@@ -1,26 +1,34 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const updateSchema = z.object({
-  name: z.string().min(1).optional(),
-  type: z.string().min(1).optional(),
+  name:   z.string().min(1).optional(),
+  type:   z.string().min(1).optional(),
   status: z.enum(["ONLINE", "OFFLINE", "MAINTENANCE", "ERROR"]).optional(),
   zoneId: z.string().optional(),
 });
 
 export async function GET(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   const device = await prisma.device.findUnique({
     where: { id },
     include: {
-      sensors: { include: { readings: { take: 1, orderBy: { timestamp: "desc" } } } },
+      sensors: {
+        include: {
+          readings: {
+            take: 30,                          // ← was 1, now 30 for sparklines
+            orderBy: { timestamp: "asc" },     // asc so sparkline reads left→right
+          },
+        },
+      },
       zone: { include: { hospital: true } },
     },
   });
+
   if (!device) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -28,13 +36,13 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const body = await request.json();
-    const data = updateSchema.parse(body);
+    const body   = await request.json();
+    const data   = updateSchema.parse(body);
     const device = await prisma.device.update({
       where: { id },
       data,
@@ -50,7 +58,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;

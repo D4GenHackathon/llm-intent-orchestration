@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DeviceStatusBadge } from "./device-status-badge";
-import { X, Map, Cpu, Wifi, Clock, Hash } from "lucide-react";
+import { X, Map, Cpu, Wifi, Clock, Hash, Loader2 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 // Extend the base Device type with optional richer fields from a detail fetch
@@ -12,7 +12,7 @@ interface Sensor {
   type: string;
   unit?: string;
   latestValue?: number;
-  readings?: { value: number; recordedAt: string }[];
+  readings?: { value: number; recordedAt?: string; timestamp?: string }[];
 }
 
 interface Device {
@@ -23,7 +23,7 @@ interface Device {
   lastSeen: string;
   firmware?: string;
   ipAddress?: string;
-  sensors: { id: string; type?: string; unit?: string; latestValue?: number; readings?: { value: number; recordedAt: string }[] }[];
+  sensors: { id: string; type?: string; unit?: string; latestValue?: number; readings?: { value: number; recordedAt?: string; timestamp?: string }[] }[];
   zone: {
     name: string;
     hospital: { id: string; name: string };
@@ -34,6 +34,7 @@ interface DeviceDetailProps {
   device: Device | null;
   onClose: () => void;
   onViewOnMap?: (device: Device) => void;
+  loadingDetail?: boolean;
 }
 
 // ─── Sparkline canvas ─────────────────────────────────────────────────────────
@@ -94,15 +95,16 @@ function Sparkline({ values, color }: { values: number[]; color: string }) {
 }
 
 // ─── Sensor card ─────────────────────────────────────────────────────────────
-function SensorCard({ sensor }: { sensor: Device["sensors"][number] }) {
-  const color = SENSOR_COLORS[sensor.type?.toLowerCase() ?? ""] ?? "#1abc9c";
-  const readings = sensor.readings?.map((r) => r.value) ?? [];
+function SensorCard({ sensor, deviceOffline, hasAlert }: { sensor: Device["sensors"][number]; deviceOffline: boolean; hasAlert?: boolean }) {
+  const activeColor = SENSOR_COLORS[sensor.type?.toLowerCase() ?? ""] ?? "#1abc9c";
+  const color = deviceOffline ? "#94a3b8" : hasAlert ? "#ef4444" : activeColor;
+  const readings = sensor.readings?.map((r: any) => typeof r === 'number' ? r : r.value ?? r.reading ?? 0).filter((v: number) => v !== undefined && v !== null) ?? [];
   const latest = sensor.latestValue ?? readings[readings.length - 1];
 
   return (
     <a
       href={`/sensors/${sensor.id}`}
-      className="rounded-lg border bg-muted/30 p-3 flex flex-col gap-2 hover:bg-muted/60 hover:border-border transition-colors no-underline group"
+      className={`rounded-lg border p-3 flex flex-col gap-2 no-underline group transition-colors ${deviceOffline ? "bg-muted/20 opacity-60 pointer-events-none" : hasAlert ? "bg-red-50 border-red-300 hover:bg-red-100" : "bg-muted/30 hover:bg-muted/60 hover:border-border"}`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
@@ -128,7 +130,7 @@ function SensorCard({ sensor }: { sensor: Device["sensors"][number] }) {
           <span className="text-muted-foreground/40 text-xs opacity-0 group-hover:opacity-100 transition-opacity">↗</span>
         </div>
       </div>
-      {readings.length > 1 ? (
+      {readings.length > 0 ? (
         <Sparkline values={readings} color={color} />
       ) : (
         <p className="text-xs text-muted-foreground">No readings yet</p>
@@ -158,9 +160,32 @@ function InfoRow({
 }
 
 // ─── Main panel ──────────────────────────────────────────────────────────────
-export function DeviceDetail({ device, onClose, onViewOnMap }: DeviceDetailProps) {
+export function DeviceDetail({ device, onClose, onViewOnMap, loadingDetail }: DeviceDetailProps) {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
+  const [alertSensorIds, setAlertSensorIds] = useState<Set<string>>(new Set());
+
+  // Fetch active alerts for this device's sensors whenever device changes.
+  // We fetch per sensor ID to avoid relying on nested device relation in response.
+  useEffect(() => {
+    if (!device?.sensors?.length) return;
+    const sensorIds = device.sensors.map((s: any) => s.id);
+
+    Promise.all(
+      sensorIds.map((sid: string) =>
+        fetch(`/api/alerts?sensorId=${sid}&acknowledged=false&limit=10`)
+          .then((r) => r.json())
+          .then((data) => {
+            const list = Array.isArray(data) ? data : (data.alerts ?? []);
+            return list.length > 0 ? sid : null;
+          })
+          .catch(() => null)
+      )
+    ).then((results) => {
+      const ids = new Set<string>(results.filter(Boolean) as string[]);
+      setAlertSensorIds(ids);
+    });
+  }, [device?.id]);
 
   // Sync open state to device presence with animation timing
   useEffect(() => {
@@ -267,13 +292,19 @@ export function DeviceDetail({ device, onClose, onViewOnMap }: DeviceDetailProps
 
           {/* Sensors */}
           <div>
+            {loadingDetail && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading sensor data…
+              </div>
+            )}
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
               Sensors · {device.sensors.length}
             </p>
             {device.sensors.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 {device.sensors.map((s) => (
-                  <SensorCard key={s.id} sensor={s} />
+                  <SensorCard key={s.id} sensor={s} deviceOffline={device.status !== "ONLINE"} hasAlert={alertSensorIds.has(s.id)} />
                 ))}
               </div>
             ) : (

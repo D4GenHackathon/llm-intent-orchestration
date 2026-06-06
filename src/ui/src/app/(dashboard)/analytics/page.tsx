@@ -1,18 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { TrendChart } from "@/components/analytics/trend-chart";
+import { useEffect, useState, useCallback } from "react";
 import { StatsCards } from "@/components/analytics/stats-cards";
 import { DateRangePicker } from "@/components/analytics/date-range-picker";
 import { ExportButton } from "@/components/analytics/export-button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import dynamic from "next/dynamic";
 
+const DrillDownChart = dynamic(
+  () => import("@/components/analytics/drill-down-chart").then(m => ({ default: m.DrillDownChart })),
+  { ssr: false }
+);
+const SensorStatTable = dynamic(
+  () => import("@/components/analytics/sensor-stat-table").then(m => ({ default: m.SensorStatTable })),
+  { ssr: false }
+);
 interface SensorStat {
   sensorId: string;
   sensorName: string;
@@ -22,28 +27,47 @@ interface SensorStat {
   min: number;
   max: number;
   avg: number;
-  readings: { value: number; timestamp: string }[];
 }
 
 export default function AnalyticsPage() {
-  const [stats, setStats] = useState<SensorStat[]>([]);
+  const [stats,         setStats]         = useState<SensorStat[]>([]);
   const [totalReadings, setTotalReadings] = useState(0);
-  const [hours, setHours] = useState(168);
-  const [sensorType, setSensorType] = useState("all");
+  const [hours,         setHours]         = useState(168);
+  const [sensorType,    setSensorType]    = useState("all");
+  const [selectedSensor, setSelectedSensor] = useState<SensorStat | null>(null);
+  const [drillData,     setDrillData]     = useState<{ value: number; timestamp: string }[]>([]);
+  const [drillLoading,  setDrillLoading]  = useState(false);
 
+  // Load summary stats (fast — no readings)
   useEffect(() => {
     const params = new URLSearchParams({ hours: hours.toString() });
     if (sensorType !== "all") params.set("sensorType", sensorType);
     fetch(`/api/analytics?${params}`)
-      .then((res) => res.json())
+      .then((r) => r.json())
       .then((data) => {
-        setStats(data.stats);
-        setTotalReadings(data.totalReadings);
+        setStats(data.stats ?? []);
+        setTotalReadings(data.totalReadings ?? 0);
+        setSelectedSensor(null);
+        setDrillData([]);
       });
   }, [hours, sensorType]);
 
+  // Load readings for selected sensor
+  const loadDrillDown = useCallback(async (sensor: SensorStat) => {
+    setSelectedSensor(sensor);
+    setDrillLoading(true);
+    const params = new URLSearchParams({
+      hours:    hours.toString(),
+      sensorId: sensor.sensorId,
+    });
+    const data = await fetch(`/api/analytics?${params}`).then((r) => r.json());
+    setDrillData(data.readings ?? []);
+    setDrillLoading(false);
+  }, [hours]);
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Analytics</h1>
@@ -52,9 +76,10 @@ export default function AnalyticsPage() {
         <ExportButton hours={hours} />
       </div>
 
+      {/* Filters */}
       <div className="flex flex-wrap gap-4">
-        <DateRangePicker hours={hours} onChange={setHours} />
-        <Select value={sensorType} onValueChange={setSensorType}>
+        <DateRangePicker hours={hours} onChange={(h) => { setHours(h); setSelectedSensor(null); }} />
+        <Select value={sensorType} onValueChange={(v) => { setSensorType(v); setSelectedSensor(null); }}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All sensor types" />
           </SelectTrigger>
@@ -69,8 +94,25 @@ export default function AnalyticsPage() {
         </Select>
       </div>
 
+      {/* Summary stats */}
       <StatsCards stats={stats} totalReadings={totalReadings} />
-      <TrendChart stats={stats} />
+
+      {/* Drill-down chart — shown when a sensor is selected */}
+      {selectedSensor && (
+        <DrillDownChart
+          sensor={selectedSensor}
+          readings={drillData}
+          loading={drillLoading}
+          onClose={() => { setSelectedSensor(null); setDrillData([]); }}
+        />
+      )}
+
+      {/* Sensor table — click a row to drill down */}
+      <SensorStatTable
+        stats={stats}
+        selectedId={selectedSensor?.sensorId}
+        onSelect={loadDrillDown}
+      />
     </div>
   );
 }

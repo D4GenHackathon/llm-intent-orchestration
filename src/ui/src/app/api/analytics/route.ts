@@ -1,67 +1,71 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const hours = parseInt(searchParams.get("hours") || "168");
+export async function GET(request: NextRequest) {
+  const { searchParams } = request.nextUrl;
+  const hours      = parseInt(searchParams.get("hours")      ?? "168");
   const sensorType = searchParams.get("sensorType");
-  const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+  const sensorId   = searchParams.get("sensorId");   // drill-down to one sensor
+  const since      = new Date(Date.now() - hours * 60 * 60 * 1000);
 
-  const where: Record<string, unknown> = {
-    timestamp: { gte: since },
-  };
-  if (sensorType) {
-    where.sensor = { type: sensorType };
+  // ── Summary stats per sensor (no readings — fast) ────────────────────────
+  if (!sensorId) {
+    const where: any = { timestamp: { gte: since } };
+    if (sensorType) where.sensor = { type: sensorType };
+
+    const [totalReadings, grouped] = await Promise.all([
+      prisma.sensorReading.count({ where }),
+      prisma.sensorReading.groupBy({
+        by: ["sensorId"],
+        where,
+        _count: { value: true },
+        _min:   { value: true },
+        _max:   { value: true },
+        _avg:   { value: true },
+      }),
+    ]);
+
+    // Fetch sensor metadata separately
+    const sensorIds = grouped.map((g) => g.sensorId);
+    const sensors   = await prisma.sensor.findMany({
+      where: { id: { in: sensorIds } },
+      select: { id: true, name: true, type: true, unit: true },
+    });
+    const sensorMap = Object.fromEntries(sensors.map((s) => [s.id, s]));
+
+    const stats = grouped.map((g) => ({
+      sensorId:   g.sensorId,
+      sensorName: sensorMap[g.sensorId]?.name ?? "Unknown",
+      sensorType: sensorMap[g.sensorId]?.type ?? "UNKNOWN",
+      unit:       sensorMap[g.sensorId]?.unit ?? "",
+      count:      g._count.value,
+      min:        g._min.value  ?? 0,
+      max:        g._max.value  ?? 0,
+      avg:        g._avg.value  ?? 0,
+    }));
+
+    return NextResponse.json({ stats, totalReadings });
   }
 
-  const readings = await prisma.sensorReading.findMany({
-    where,
-    include: {
-      sensor: {
-        select: { name: true, type: true, unit: true },
-      },
-    },
-    orderBy: { timestamp: "asc" },
-  });
-
-  const sensorStats: Record<string, {
-    sensorName: string;
-    sensorType: string;
-    unit: string;
-    count: number;
-    min: number;
-    max: number;
-    sum: number;
-    avg: number;
-    readings: { value: number; timestamp: string }[];
-  }> = {};
-
-  for (const reading of readings) {
-    const key = reading.sensorId;
-    if (!sensorStats[key]) {
-      sensorStats[key] = {
-        sensorName: reading.sensor.name,
-        sensorType: reading.sensor.type,
-        unit: reading.sensor.unit,
-        count: 0,
-        min: Infinity,
-        max: -Infinity,
-        sum: 0,
-        avg: 0,
-        readings: [],
-      };
-    }
-    const s = sensorStats[key];
-    s.count++;
-    s.min = Math.min(s.min, reading.value);
-    s.max = Math.max(s.max, reading.value);
-    s.sum += reading.value;
-    s.avg = s.sum / s.count;
-    s.readings.push({ value: reading.value, timestamp: reading.timestamp.toISOString() });
-  }
+  // ── Drill-down: readings for one sensor ──────────────────────────────────
+  const [sensor, readings] = await Promise.all([
+    prisma.sensor.findUnique({
+      where: { id: sensorId },
+      select: { id: true, name: true, type: true, unit: true },
+    }),
+    prisma.sensorReading.findMany({
+      where:   { sensorId, timestamp: { gte: since } },
+      orderBy: { timestamp: "asc" },
+      take:    500, // cap for chart perf
+      select:  { value: true, timestamp: true },
+    }),
+  ]);
 
   return NextResponse.json({
-    stats: Object.entries(sensorStats).map(([id, s]) => ({ sensorId: id, ...s })),
-    totalReadings: readings.length,
+    sensor,
+    readings: readings.map((r) => ({
+      value:     r.value,
+      timestamp: r.timestamp.toISOString(),
+    })),
   });
 }
