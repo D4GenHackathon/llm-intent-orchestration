@@ -19,8 +19,9 @@ Camera-based monitoring systems detect resident falls, autonomous medical IOT se
 | Version | Type | Features | Scenario| Video Demo |
 |---|---|---|---|---|
 | Alpha v1.0.1 | Initial Alpha | Application interface, dashboard functionality| Scenario 2 | [▶ Basic Function View](docs/demo/alpha101.webm) | 
-| Alpha v1.0.2 | Alpha Update | RAG model for medication prediction | Scenario 1 | [▶ Network Function Demo View](docs/demo/alpha102.mp4) | 
-| Alpha v1.0.3 | Alpha Update | Full web application functionalities | All scenarios |Upcomming (Hackathon Day) | 
+| Alpha v1.0.2 | Alpha Update | RAG model for medication prediction | Scenario 1 | [▶ Network Function Demo View](docs/demo/alpha102.mp4) |
+| Alpha v1.0.3 | Alpha Update | Generative AI for network management | Scenario 2 | [▶ Network Function Demo View](docs/demo/alpha103.webm) |
+| Alpha v1.0.4 | Alpha Update | Full web application functionalities | All scenarios |Upcomming (Hackathon Day) | 
 
 ---
 
