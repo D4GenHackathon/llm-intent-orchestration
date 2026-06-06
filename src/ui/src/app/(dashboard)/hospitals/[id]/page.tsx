@@ -113,7 +113,8 @@ export default function HospitalDetailPage() {
   const searchParams = useSearchParams();
   const mapRef       = useRef<HTMLDivElement>(null);
 
-  const [hospital, setHospital] = useState<Hospital | null>(null);
+  const [hospital,       setHospital]       = useState<Hospital | null>(null);
+  const [alertDeviceIds, setAlertDeviceIds] = useState<Set<string>>(new Set());
 
   // ?zone= passed from the devices page "View on map" button
   // Already stripped of floor prefix by the sender
@@ -132,6 +133,20 @@ export default function HospitalDetailPage() {
     fetch(`/api/hospitals/${params.id}`)
       .then((res) => res.json())
       .then(setHospital);
+
+    // Fetch active critical/high alerts to highlight devices on map
+    fetch("/api/alerts?acknowledged=false&limit=100")
+      .then((r) => r.json())
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data.alerts ?? []);
+        const ids  = new Set<string>(
+          list
+            .filter((a: any) => a.severity === "CRITICAL" || a.severity === "HIGH")
+            .map((a: any) => a.sensor?.device?.id)
+            .filter(Boolean)
+        );
+        setAlertDeviceIds(ids);
+      });
   }, [params.id]);
 
   // Scroll to map when arriving with ?zone=
@@ -231,6 +246,7 @@ export default function HospitalDetailPage() {
           hospitalData={toMapData(hospital)}
           initialFloor={initialFloor}
           highlightZone={highlightZone}
+          alertDeviceIds={alertDeviceIds}
         />
       </div>
 

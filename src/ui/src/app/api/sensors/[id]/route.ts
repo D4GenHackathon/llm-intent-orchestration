@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -11,8 +11,13 @@ export async function GET(
     include: {
       device: { include: { zone: { include: { hospital: true } } } },
       alertRules: true,
+      readings: {
+        take: 30,
+        orderBy: { timestamp: "asc" }, // asc = chronological for charts
+      },
     },
   });
+
   if (!sensor) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -20,7 +25,7 @@ export async function GET(
 }
 
 export async function DELETE(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;

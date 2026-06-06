@@ -504,7 +504,7 @@ function addFloorCorridorDetails(group: THREE.Group, floorIdx: number, floorThem
 }
 
 // ─── Build one floor from hospital data ─────────────────────────────────────
-function buildFloor(scene: THREE.Scene, floorIdx: number, floorData: any, floorTheme: any, onMeshAdded: (mesh: THREE.Mesh) => void, highlightZone?: string) {
+function buildFloor(scene: THREE.Scene, floorIdx: number, floorData: any, floorTheme: any, onMeshAdded: (mesh: THREE.Mesh) => void, highlightZone?: string, alertDeviceIds: Set<string> = new Set(), onPulse?: (mesh: THREE.Mesh) => void) {
   const rng = seededRng(`floor_${floorIdx}_${floorData.label ?? floorIdx}`);
   const group = new THREE.Group();
 
@@ -626,9 +626,10 @@ function buildFloor(scene: THREE.Scene, floorIdx: number, floorData: any, floorT
       const [ox, oz] = offsets[di % offsets.length];
       const dx = cx + ox, dz = cz + layout.d * 0.3;
 
+      const bodyColor = dev.status !== "ONLINE" ? 0x666666 : 0x2c2c2a;
       const body = new THREE.Mesh(
         new THREE.BoxGeometry(0.5, 0.65, 0.3),
-        new THREE.MeshLambertMaterial({ color: 0x2c2c2a })
+        new THREE.MeshLambertMaterial({ color: bodyColor })
       );
       body.position.set(dx, 0.42, dz);
       body.castShadow = true;
@@ -651,13 +652,44 @@ function buildFloor(scene: THREE.Scene, floorIdx: number, floorData: any, floorT
       stand.position.set(dx, 0.085, dz);
       group.add(stand);
 
-      const dotColor = dev.status === "ONLINE" ? 0x1D9E75 : 0xE24B4A;
+      const hasAlert  = alertDeviceIds.has(dev.id);
+      const isOffline  = dev.status !== "ONLINE";
+      const dotColor   = hasAlert ? 0xFF2222 : isOffline ? 0x888888 : 0x1D9E75;
       const dot = new THREE.Mesh(
         new THREE.SphereGeometry(0.06, 10, 10),
         new THREE.MeshBasicMaterial({ color: dotColor })
       );
       dot.position.set(dx + 0.18, 0.8, dz);
       group.add(dot);
+
+      // Alert: pulsing red ring above device
+      if (hasAlert) {
+        const alertRing = new THREE.Mesh(
+          new THREE.RingGeometry(0.10, 0.17, 16),
+          new THREE.MeshBasicMaterial({ color: 0xFF2222, transparent: true, opacity: 0.85, side: THREE.DoubleSide })
+        );
+        alertRing.rotation.x = -Math.PI / 2;
+        alertRing.position.set(dx, 1.05, dz);
+        alertRing.userData.isPulse = true;
+        alertRing.userData.phase   = Math.random() * Math.PI * 2;
+        alertRing.userData.isAlert = true;
+        group.add(alertRing);
+        onPulse?.(alertRing);
+
+        // Exclamation marker
+        const excl = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.025, 0.025, 0.18, 8),
+          new THREE.MeshBasicMaterial({ color: 0xFF2222 })
+        );
+        excl.position.set(dx, 1.2, dz);
+        group.add(excl);
+        const exclDot = new THREE.Mesh(
+          new THREE.SphereGeometry(0.03, 8, 8),
+          new THREE.MeshBasicMaterial({ color: 0xFF2222 })
+        );
+        exclDot.position.set(dx, 1.05, dz);
+        group.add(exclDot);
+      }
 
       return { dot };
     });
@@ -674,9 +706,10 @@ interface HospitalMap3DProps {
   hospitalData: any;
   initialFloor?: number;
   highlightZone?: string;
+  alertDeviceIds?: Set<string>;  // device ids with active critical/high alerts
 }
 
-export default function HospitalMap3D({ hospitalData, initialFloor = 0, highlightZone }: HospitalMap3DProps) {
+export default function HospitalMap3D({ hospitalData, initialFloor = 0, highlightZone, alertDeviceIds = new Set() }: HospitalMap3DProps) {
   const mountRef    = useRef<HTMLDivElement>(null);
   const sceneRef    = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -708,9 +741,11 @@ export default function HospitalMap3D({ hospitalData, initialFloor = 0, highligh
 
     const group = buildFloor(scene, floorIdx, floorData, theme, (mesh) => {
       meshesRef.current.push(mesh);
-    }, highlightZone);
+    }, highlightZone, alertDeviceIds, (pulse) => {
+      pulsesRef.current.push(pulse);
+    });
     floorGroupsRef.current.push(group);
-  }, [hospitalData, highlightZone]);
+  }, [hospitalData, highlightZone, alertDeviceIds]);
 
   useEffect(() => {
     const el = mountRef.current;
@@ -743,7 +778,6 @@ export default function HospitalMap3D({ hospitalData, initialFloor = 0, highligh
     const fill = new THREE.DirectionalLight(0xd0e8ff, 0.4);
     fill.position.set(-8, 10, -8);
     scene.add(fill);
-
     const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 200);
     camera.position.set(0, 24, 34);
     camera.lookAt(0, 0, 0);
@@ -855,7 +889,7 @@ export default function HospitalMap3D({ hospitalData, initialFloor = 0, highligh
 
       {/* Floor tabs */}
       <div style={{ display: "flex", overflowX: "auto", padding: "0 20px", background: "var(--color-background-primary)", borderBottom: "0.5px solid var(--color-border-tertiary)" }}>
-        {hospitalData.floors.map((f:any, i:any) => (
+        {hospitalData.floors.map((f:any, i:number) => (
           <button key={i} onClick={() => setSelectedFloor(i)}
             style={{ whiteSpace: "nowrap", padding: "8px 16px", fontSize: 12, fontWeight: 500, cursor: "pointer", background: "none", border: "none",
               borderBottom: selectedFloor === i ? `2px solid #${FLOOR_THEMES[i % FLOOR_THEMES.length].accentColor.toString(16)}` : "2px solid transparent",
@@ -885,7 +919,7 @@ export default function HospitalMap3D({ hospitalData, initialFloor = 0, highligh
 
         {/* Status legend */}
         <div style={{ position: "absolute", bottom: 12, left: 12, display: "flex", gap: 8 }}>
-          {[["#1D9E75", "Online"], ["#E24B4A", "Offline"]].map(([c, label]) => (
+          {[["#1D9E75", "Online"], ["#888888", "Offline"], ["#FF2222", "Alert"]].map(([c, label]) => (
             <div key={label} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--color-text-secondary)", background: "var(--color-background-primary)", padding: "4px 8px", borderRadius: 6, border: "0.5px solid var(--color-border-tertiary)" }}>
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: c, display: "inline-block" }} />
               {label}

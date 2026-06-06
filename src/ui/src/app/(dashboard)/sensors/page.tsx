@@ -32,7 +32,7 @@ export default function SensorsPage() {
           Monitor all sensor readings across your devices and zones in one place
         </p>
       </div>
-      <SensorGrid sensors={sensors} />
+      <SensorGrid />
       {sensors.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
           No sensors found. Add sensors to your devices to start monitoring.
