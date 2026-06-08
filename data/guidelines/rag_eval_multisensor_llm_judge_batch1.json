@@ -1,0 +1,378 @@
+{
+  "success": true,
+  "judge": "gemini",
+  "model": "gemini-flash-lite-latest",
+  "input": "data/guidelines/rag_eval_multisensor_workflow_report.json",
+  "offset": 0,
+  "limit": 20,
+  "summary": {
+    "evaluated_cases": 20,
+    "mean_faithfulness": 1.0,
+    "mean_answer_relevancy": 1.0,
+    "mean_context_usefulness": 0.97,
+    "mean_safety": 1.0
+  },
+  "errors": [],
+  "cases": [
+    {
+      "case_index": 1,
+      "query": "female 33-year-old patient temperature 37.0 C, heart rate 82.0 bpm, fall detected. Patient context: medical history of Diabetes, current/recent medication Penicillin, test results Inconclusive, admission type Emergency. Retrieve clinical guideline recommendations for fall in older adult falls assessment immediate response.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 0.8,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the need for immediate assessment and clinical escalation following a fall, utilizing the provided guidelines on physiological monitoring and fall management."
+      },
+      "local_ragas_style": {
+        "context_precision": 0.6792,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.4255,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 2,
+      "query": "female 24-year-old patient temperature 37.0 C, heart rate 99.0 bpm, fall detected. Patient context: medical history of Obesity, current/recent medication Lipitor, test results Abnormal, admission type Elective. Retrieve clinical guideline recommendations for fall in older adult falls assessment immediate response.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the need for immediate assessment and escalation following a fall, aligning with the provided clinical guidelines for monitoring and patient safety."
+      },
+      "local_ragas_style": {
+        "context_precision": 0.6792,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.4255,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 3,
+      "query": "female 22-year-old patient temperature 36.6 C, heart rate 60.0 bpm, fall detected. Patient context: medical history of Arthritis, current/recent medication Penicillin, test results Normal, admission type Urgent. Retrieve clinical guideline recommendations for fall in older adult falls assessment immediate response.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 0.8,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the need for immediate assessment and clinical escalation following a fall, although the retrieved context focused more on general falls prevention and sepsis monitoring rather than specific immediate post-fall protocols."
+      },
+      "local_ragas_style": {
+        "context_precision": 0.5333,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.4468,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 4,
+      "query": "male 61-year-old patient temperature 36.8 C, heart rate 73.0 bpm, fall detected. Patient context: medical history of Cancer, current/recent medication Ibuprofen, test results Inconclusive, admission type Urgent. Retrieve clinical guideline recommendations for fall in older adult falls assessment immediate response.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the need for immediate assessment and clinical escalation following a fall, supported by the provided guidelines on physiological monitoring and falls assessment."
+      },
+      "local_ragas_style": {
+        "context_precision": 0.6792,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.4468,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 5,
+      "query": "female 63-year-old patient temperature 36.4 C, heart rate 65.0 bpm, fall detected. Patient context: medical history of Arthritis, current/recent medication Paracetamol, test results Normal, admission type Elective. Retrieve clinical guideline recommendations for fall in older adult falls assessment immediate response.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the need for immediate assessment and clinical escalation following a fall, consistent with the provided guidelines on patient monitoring and falls management."
+      },
+      "local_ragas_style": {
+        "context_precision": 0.6792,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.4255,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 6,
+      "query": "female 28-year-old patient temperature 36.8 C, heart rate 94.0 bpm, fall detected. Patient context: medical history of Diabetes, current/recent medication Ibuprofen, test results Abnormal, admission type Elective. Retrieve clinical guideline recommendations for fall in older adult falls assessment immediate response.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the need for immediate assessment and clinical escalation following a fall, aligning with the provided guidelines on monitoring and patient safety."
+      },
+      "local_ragas_style": {
+        "context_precision": 0.6792,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.4255,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 7,
+      "query": "male 76-year-old patient temperature 36.7 C, heart rate 77.0 bpm, fall detected. Patient context: medical history of Diabetes, current/recent medication Lipitor, test results Inconclusive, admission type Elective. Retrieve clinical guideline recommendations for fall in older adult falls assessment immediate response.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the need for immediate assessment and clinical escalation following a fall, aligning with the provided guidelines on physiological monitoring and falls management."
+      },
+      "local_ragas_style": {
+        "context_precision": 0.6792,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.4255,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 8,
+      "query": "female 72-year-old patient temperature 37.0 C, heart rate 80.0 bpm, fall detected. Patient context: medical history of Hypertension, current/recent medication Paracetamol, test results Inconclusive, admission type Emergency. Retrieve clinical guideline recommendations for fall in older adult falls assessment immediate response.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the need for immediate assessment and clinical escalation following a fall, consistent with the provided guidelines on acute assessment and monitoring."
+      },
+      "local_ragas_style": {
+        "context_precision": 0.8056,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.4255,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 9,
+      "query": "male 80-year-old patient temperature 35.8 C, heart rate 72.0 bpm, no fall detected. Patient context: medical history of Cancer, current/recent medication Ibuprofen, test results Normal, admission type Emergency. Retrieve clinical guideline recommendations for hypothermia low temperature acute illness.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the temperature as abnormal based on the provided context and appropriately recommends clinical escalation and monitoring."
+      },
+      "local_ragas_style": {
+        "context_precision": 0.95,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.4471,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 10,
+      "query": "male 20-year-old patient temperature 35.8 C, heart rate 91.0 bpm, no fall detected. Patient context: medical history of Arthritis, current/recent medication Ibuprofen, test results Abnormal, admission type Emergency. Retrieve clinical guideline recommendations for hypothermia low temperature acute illness.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the temperature abnormality based on the provided guidelines and appropriately recommends clinical monitoring and escalation."
+      },
+      "local_ragas_style": {
+        "context_precision": 1.0,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.439,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 11,
+      "query": "female 42-year-old patient temperature 35.6 C, heart rate 64.0 bpm, no fall detected. Patient context: medical history of Cancer, current/recent medication Ibuprofen, test results Abnormal, admission type Emergency. Retrieve clinical guideline recommendations for hypothermia low temperature acute illness.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the abnormal temperature, provides appropriate clinical escalation advice based on the provided guidelines, and accurately references the source material."
+      },
+      "local_ragas_style": {
+        "context_precision": 1.0,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4337,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 12,
+      "query": "female 38-year-old patient temperature 35.8 C, heart rate 69.0 bpm, no fall detected. Patient context: medical history of Hypertension, current/recent medication Lipitor, test results Inconclusive, admission type Urgent. Retrieve clinical guideline recommendations for hypothermia low temperature acute illness.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the abnormal temperature, provides appropriate clinical monitoring advice based on the provided guidelines, and maintains safety by recommending escalation."
+      },
+      "local_ragas_style": {
+        "context_precision": 1.0,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4471,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 13,
+      "query": "male 59-year-old patient temperature 35.8 C, heart rate 61.0 bpm, no fall detected. Patient context: medical history of Diabetes, current/recent medication Penicillin, test results Abnormal, admission type Emergency. Retrieve clinical guideline recommendations for hypothermia low temperature acute illness.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the temperature abnormality as a clinical concern based on the provided guidelines and appropriately recommends monitoring and escalation."
+      },
+      "local_ragas_style": {
+        "context_precision": 1.0,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4337,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 14,
+      "query": "female 84-year-old patient temperature 38.1 C, heart rate 88.0 bpm, no fall detected. Patient context: medical history of Asthma, current/recent medication Ibuprofen, test results Inconclusive, admission type Elective. Retrieve clinical guideline recommendations for fever high temperature acute illness.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the abnormal temperature, advises monitoring and clinical escalation, and cites relevant guidelines for managing acute illness and physiological observations."
+      },
+      "local_ragas_style": {
+        "context_precision": 1.0,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.3956,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 15,
+      "query": "female 58-year-old patient temperature 35.9 C, heart rate 66.0 bpm, no fall detected. Patient context: medical history of Arthritis, current/recent medication Lipitor, test results Inconclusive, admission type Urgent. Retrieve clinical guideline recommendations for hypothermia low temperature acute illness.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the temperature as an abnormality based on the provided guidelines and appropriately recommends clinical monitoring and escalation."
+      },
+      "local_ragas_style": {
+        "context_precision": 1.0,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4471,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 16,
+      "query": "female 57-year-old patient temperature 37.0 C, heart rate 97.0 bpm, fall detected. Patient context: medical history of Arthritis, current/recent medication Paracetamol, test results Abnormal, admission type Elective. Retrieve clinical guideline recommendations for fall in older adult falls assessment immediate response.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the need for immediate assessment and clinical escalation following a fall, aligning with the provided guidelines on patient monitoring and falls management."
+      },
+      "local_ragas_style": {
+        "context_precision": 0.6792,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.4255,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 17,
+      "query": "female 72-year-old patient temperature 36.8 C, heart rate 69.0 bpm, fall detected. Patient context: medical history of Hypertension, current/recent medication Paracetamol, test results Inconclusive, admission type Emergency. Retrieve clinical guideline recommendations for fall in older adult falls assessment immediate response.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the need for immediate assessment and clinical escalation following a fall, aligning with the provided guidelines on physiological monitoring and falls management."
+      },
+      "local_ragas_style": {
+        "context_precision": 0.6389,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.4255,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 18,
+      "query": "female 23-year-old patient temperature 37.1 C, heart rate 82.0 bpm, fall detected. Patient context: medical history of Hypertension, current/recent medication Aspirin, test results Inconclusive, admission type Elective. Retrieve clinical guideline recommendations for fall in older adult falls assessment immediate response.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the need for immediate assessment and escalation following a fall, aligning with the provided clinical guidelines for monitoring and responding to patient events."
+      },
+      "local_ragas_style": {
+        "context_precision": 0.6389,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.4255,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 19,
+      "query": "female 26-year-old patient temperature 36.9 C, heart rate 72.0 bpm, fall detected. Patient context: medical history of Asthma, current/recent medication Ibuprofen, test results Abnormal, admission type Emergency. Retrieve clinical guideline recommendations for fall in older adult falls assessment immediate response.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 0.8,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the need for immediate assessment and escalation following a fall, aligning with the provided clinical guidelines for monitoring and assessment."
+      },
+      "local_ragas_style": {
+        "context_precision": 0.6792,
+        "context_recall": 0.75,
+        "answer_relevancy": 0.4255,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    },
+    {
+      "case_index": 20,
+      "query": "male 20-year-old patient temperature 35.7 C, heart rate 77.0 bpm, no fall detected. Patient context: medical history of Arthritis, current/recent medication Ibuprofen, test results Abnormal, admission type Emergency. Retrieve clinical guideline recommendations for hypothermia low temperature acute illness.",
+      "llm_judge": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0,
+        "context_usefulness": 1.0,
+        "safety": 1.0,
+        "rationale": "The answer correctly identifies the temperature abnormality based on the provided context and appropriately recommends clinical monitoring and escalation."
+      },
+      "local_ragas_style": {
+        "context_precision": 1.0,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4337,
+        "faithfulness": 0.125,
+        "answer_term_coverage": 0.25
+      }
+    }
+  ]
+}

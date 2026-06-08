@@ -1,4 +1,4 @@
-"""Patient sensor-vital lookup backed by the patient vitals CSV."""
+"""Patient sensor-vital lookup backed by the multi-sensor IoT CSV."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from repositories.patient_history import PatientHistoryRepository
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_PATIENT_VITALS_PATH = PROJECT_ROOT / "data" / "patient_vitals.csv"
+DEFAULT_PATIENT_VITALS_PATH = PROJECT_ROOT / "data" / "Multi-Sensor_Medical_IoT_Dataset.csv"
 
 
 @dataclass(frozen=True)
@@ -69,7 +69,7 @@ class PatientVitalsRepository:
                 records[(patient_id, timestamp)] = PatientVitals(
                     patient_id=patient_id,
                     timestamp=timestamp,
-                    temperature=float(row.get("temperature") or 0),
+                    temperature=float(row.get("body_temperature") or row.get("temperature") or 0),
                     heart_rate=float(row.get("heart_rate") or 0),
                     fall_detected=fall_detected,
                 )

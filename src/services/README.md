@@ -114,7 +114,7 @@ poetry run python scripts/build_guideline_vector_store.py
 ```text
 data/
 |-- healthcare_dataset.csv
-|-- patient_vitals.csv
+|-- Multi-Sensor_Medical_IoT_Dataset.csv
 |-- db_drug_interactions.csv
 |-- drugs_side_effects_drugs_com.csv
 `-- guidelines/
