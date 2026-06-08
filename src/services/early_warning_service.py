@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import os
-from typing import Any
-
-from crewai import LLM
+from typing import Any, TYPE_CHECKING
 
 from repositories.patient_history import PatientHistoryRepository
 from repositories.patient_vitals import PatientVitalsRepository
 from schemas.response import WorkflowResponse
-from services.guideline_vector_store import GuidelineVectorStore
 from services.runtime_env import load_medical_environment
+
+if TYPE_CHECKING:
+    from crewai import LLM
+    from services.guideline_vector_store import GuidelineVectorStore
 
 
 class EarlyWarningService:
@@ -19,14 +20,18 @@ class EarlyWarningService:
 
     def __init__(
         self,
-        vector_store: GuidelineVectorStore | None = None,
+        vector_store: "GuidelineVectorStore | None" = None,
         patient_history_repository: PatientHistoryRepository | None = None,
         patient_vitals_repository: PatientVitalsRepository | None = None,
-        llm: LLM | None = None,
+        llm: "LLM | None" = None,
         enable_llm: bool = True,
     ) -> None:
         load_medical_environment()
-        self.vector_store = vector_store or GuidelineVectorStore()
+        if vector_store is None:
+            from services.guideline_vector_store import GuidelineVectorStore
+
+            vector_store = GuidelineVectorStore()
+        self.vector_store = vector_store
         self.patient_history_repository = patient_history_repository or PatientHistoryRepository()
         self.patient_vitals_repository = patient_vitals_repository or PatientVitalsRepository()
         self.model = os.getenv("GEMINI_MODEL", "gemini/gemini-flash-latest")
@@ -368,7 +373,14 @@ class EarlyWarningService:
         if not self._llm and not self.api_key.strip():
             return None
 
-        llm = self._llm or LLM(model=self.model, api_key=self.api_key, temperature=0.2, timeout=20)
+        if self._llm:
+            llm = self._llm
+        else:
+            try:
+                from crewai import LLM
+            except ImportError:
+                return None
+            llm = LLM(model=self.model, api_key=self.api_key, temperature=0.2, timeout=20)
         context_text = "\n\n".join(
             f"[{item.get('citation')}] {str(item.get('text', ''))[:1400]}" for item in context[:5]
         )

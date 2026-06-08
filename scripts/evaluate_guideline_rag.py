@@ -292,6 +292,7 @@ def evaluate_answer(
     retrieved_texts: list[str],
     expected_terms: list[str],
     reference_answer: str = "",
+    extra_grounding_texts: list[str] | None = None,
 ) -> dict[str, Any]:
     if not answer.strip():
         return {
@@ -304,7 +305,7 @@ def evaluate_answer(
 
     relevancy_basis = f"{query} {reference_answer}".strip()
     answer_relevancy = lexical_similarity(answer, relevancy_basis)
-    grounding_text = "\n".join([query, reference_answer, *retrieved_texts])
+    grounding_text = "\n".join([query, reference_answer, *(extra_grounding_texts or []), *retrieved_texts])
     normalized_grounding = normalize_text(grounding_text)
     claims = split_claims(answer)
     supported_claims = 0
@@ -335,6 +336,7 @@ def evaluate_retrieved_results(
     results: list[dict[str, Any]],
     case: BenchmarkCase,
     answer: str = "",
+    extra_grounding_texts: list[str] | None = None,
 ) -> dict[str, Any]:
     retrieved_texts = [result_text(item).lower() for item in results]
     retrieved_citations = [result_citation(item).lower() for item in results]
@@ -359,6 +361,7 @@ def evaluate_retrieved_results(
         retrieved_texts=retrieved_texts,
         expected_terms=case.expected_terms,
         reference_answer=case.reference_answer,
+        extra_grounding_texts=extra_grounding_texts,
     )
     expected_context_ids = case.expected_context_ids or []
     context_id_hits = sum(1 for expected_id in expected_context_ids if expected_id in retrieved_ids)
@@ -425,7 +428,19 @@ def evaluate_workflow_case(service: Any, case: BenchmarkCase) -> dict[str, Any]:
     if not isinstance(retrieved_context, list):
         retrieved_context = []
     answer = str(result.get("alert") or case.answer)
-    row = evaluate_retrieved_results(query, retrieved_context, case, answer=answer)
+    record = result.get("record") if isinstance(result.get("record"), dict) else {}
+    abnormalities = result.get("abnormalities") if isinstance(result.get("abnormalities"), list) else []
+    workflow_grounding = [
+        json.dumps(record, ensure_ascii=False, sort_keys=True),
+        json.dumps(abnormalities, ensure_ascii=False, sort_keys=True),
+    ]
+    row = evaluate_retrieved_results(
+        query,
+        retrieved_context,
+        case,
+        answer=answer,
+        extra_grounding_texts=workflow_grounding,
+    )
     row["workflow"] = {
         "success": response.get("success"),
         "alert_required": result.get("alert_required"),

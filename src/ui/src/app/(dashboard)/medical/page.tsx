@@ -164,7 +164,7 @@ const EMPTY_HEALTH_RISK_DRAFT: HealthRiskDraft = {
 
 const EMPTY_EARLY_WARNING_DRAFT: EarlyWarningDraft = {
   patient_id: "P000004",
-  timestamp: "2026-04-24 10:00",
+  timestamp: "2025-07-08 05:19",
 };
 
 const EMPTY_PRESCRIPTION_SAFETY_DRAFT: PrescriptionSafetyDraft = {
@@ -1011,7 +1011,7 @@ export default function MedicalWorkflowsPage() {
                     id="early-timestamp"
                     value={earlyWarningDraft.timestamp}
                     onChange={(event) => updateEarlyWarningField("timestamp", event.target.value)}
-                    placeholder="2026-04-24 10:00"
+                    placeholder="2025-07-08 05:19"
                   />
                 </div>
               </div>
