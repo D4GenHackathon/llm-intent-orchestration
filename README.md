@@ -230,7 +230,6 @@ This project is developed within the **Paris-Saclay innovation ecosystem** at th
 > - The system is designed for research and demonstration purposes only
 > - Clinical deployment would require regulatory approval (CE marking, FDA clearance, etc.)
 > - Patient data privacy is ensured through institutional governance and access control mechanisms
-> - 
 ---
 
 ## References
@@ -269,7 +268,7 @@ This project is developed within the **Paris-Saclay innovation ecosystem** at th
 
 > [!NOTE]
 > **Additional Reading:**  
-> For comprehensive background on blockchain-based secure data transmission (inter-institutional sharing component), zero-knowledge proofs (zk-SNARKs), and privacy-preserving mechanisms, please refer to the blockchain subsystem repository and our ESORICS conference paper (forthcoming).
+> For comprehensive background on blockchain-based secure data transmission (across-institutional sharing component) thanks to zero-knowledge proofs (zk-SNARKs) privacy-preserving mechanisms, please refer to the blockchain subsystem repository and our ESORICS conference paper (forthcoming).
 
 ---
 
