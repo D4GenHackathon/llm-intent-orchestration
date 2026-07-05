@@ -2,7 +2,7 @@
 
 A web-based medical assistant for structured clinical monitoring and medication-safety support. The current system uses a task-based dashboard with deterministic backend workflows, local medical datasets, a trained health-risk model, and guideline retrieval for early-warning alerts.
 
-![Medical Assistant Overview](docs/medical/overview.png)
+![Medical Assistant Overview](/docs/medical/overview.png)
 
 ## Features
 
