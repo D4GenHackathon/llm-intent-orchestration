@@ -13,8 +13,6 @@
 **Laboratoire IBISC (Informatique, Bioinformatique, Systèmes Complexes EA 4526)**  
 *Université Évry Paris-Saclay*
 
-[D4Gen Hackathon Presentation](https://docs.google.com/presentation/d/1dIFfxO6JmQFQiGihexDT0RxHEQ_-1zaR/edit?slide=id.p1#slide=id.p1)
-
 </div>
 
 ---
@@ -23,7 +21,7 @@
 
 Modern medical research laboratories increasingly integrate smart workspace environments with diverse IoT devices and services. However, clinicians, nurses, and researchers—typically non-IT specialists—require intuitive mechanisms to express their operational intents without manual device configuration. Large Language Models (LLMs) offer promising capabilities in reasoning, planning, and task orchestration, enabling seamless automation of data retrieval, analysis, and workflow execution.
 
-This repository represents the **within-institutional management component** (AIoT subsystem) of the HOPPERS platform, focusing on medical IoT device orchestration to build a complete secure and automated smart environment for healthcare institutions. The complete solution integrates AIoT data collection with secure inter-institutional data sharing mechanisms.
+This repository represents the **within-institutional management component** (AIoT subsystem) of the HOPPERS platform, focusing on medical IoT device orchestration to build a complete secure and automated smart environment for healthcare institutions. The complete solution, presented in [D4Gen Hackathon Presentation](https://docs.google.com/presentation/d/1dIFfxO6JmQFQiGihexDT0RxHEQ_-1zaR/edit?slide=id.p1#slide=id.p1), integrates AIoT data collection with secure inter-institutional data sharing mechanisms.
 
 > [!NOTE]
 > This repository focuses on the **AIoT and SDN-based in-hospital data management** components. The blockchain-based secure data transmission layer for inter-institutional sharing is maintained in a separate repository.
@@ -67,39 +65,6 @@ Autonomous orchestration of medical IoT sensors and actuators to enhance hospita
 | **Alpha v1.0.4** | Alpha Update | Full web application functionalities | All scenarios | [▶ Full Functionality View](https://www.youtube.com/watch?v=25nDVT_wcZk) |
 
 ---
-
-## System Architecture
-
-The system architecture integrates multiple components to enable LLM-driven intent orchestration for medical IoT environments:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    AIoT Smart Hospital Ecosystem                 │
-│                                                                 │
-│  ┌──────────────────┐   ┌──────────────────┐   ┌─────────────┐ │
-│  │  ESP32 Sensors   │   │  TinyLLM Edge    │   │  RAG Model  │ │
-│  │  (ECG, Temp,     │──▶│  Inference       │   │  Clinical   │ │
-│  │   BP, SpO2)      │   │  & Alerts        │   │  Support    │ │
-│  └────────┬─────────┘   └──────────────────┘   └─────────────┘ │
-│           │                                                      │
-│  ┌────────▼──────────────────────────────────────────────────┐  │
-│  │         Mininet-WiFi Hospital Network Simulation          │  │
-│  │              ONOS SDN Controller (Layer 3)                 │  │
-│  │      Programmable Network Flow Management & QoS            │  │
-│  └────────┬──────────────────────────────────────────────────┘  │
-│           │                                                      │
-│  ┌────────▼──────────────────────────────────────────────────┐  │
-│  │         FastAPI Backend + FastMCP Server                   │  │
-│  │    CrewAI Multi-Agent Orchestration (Gemini LLM)          │  │
-│  │      Intent Parsing → Task Planning → Execution            │  │
-│  └────────┬──────────────────────────────────────────────────┘  │
-│           │                                                      │
-│  ┌────────▼──────────────────────────────────────────────────┐  │
-│  │            Next.js Web Dashboard                           │  │
-│  │   Real-time Monitoring, Control & Visualization UI         │  │
-│  └────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-```
 
 > [!NOTE]
 > **Key Architectural Components:**
@@ -248,8 +213,6 @@ This project is developed within the **Paris-Saclay innovation ecosystem** at th
 > [!NOTE]
 > **Academic Trajectory:**
 > - **Current Phase**: D4Gen Hackathon prototype demonstration (June 2026)
-> - **Summer 2026**: Participation in SUI Hackathon EPFL, AFS Youth Assembly innovation events
-> - **Conference Publication**: ESORICS (European Symposium on Research in Computer Security, A-core conference) with focus on zk-SNARK circuit design and optimization
 > - **Future Work**: IEEE journal publication (2027) on privacy-preserving AIoT architectures for healthcare
 > - **Long-term Vision**: Scalable SaaS platform deployment across European healthcare institutions
 
@@ -267,17 +230,7 @@ This project is developed within the **Paris-Saclay innovation ecosystem** at th
 > - The system is designed for research and demonstration purposes only
 > - Clinical deployment would require regulatory approval (CE marking, FDA clearance, etc.)
 > - Patient data privacy is ensured through institutional governance and access control mechanisms
-
----
-
-## Team
-
-| Name | Role | Institution |
-|------|------|------------|
-| **Huyen-Trang Le** | Team Leader · AIoT Architecture & LLM Orchestration | IBISC, Université Évry Paris-Saclay |
-| **Nguyen-Huong-Giang Le** | Backend Development & System Integration | IBISC, Université Évry Paris-Saclay |
-| **Massinissa Hamidi** | SDN Network Simulation & ONOS Controller | IBISC, Université Évry Paris-Saclay |
-
+> - 
 ---
 
 ## References
@@ -291,17 +244,18 @@ This project is developed within the **Paris-Saclay innovation ecosystem** at th
 6. **LangChain MCP Adapters**: [langchain-mcp-adapters](https://github.com/langchain-ai/langchain-mcp-adapters)
 7. **ONOS MCP Server** *(code inspiration)*: [onos-mcp-server](https://github.com/MCP-Mirror/davidlin2k_onos-mcp-server)
 
-### Academic Publications — Intent-Based Network Automation
+### Academic Publications 
+#### Intent-Based Network Automation
 8. Njah, Y., et al. (2023). "Toward intent-based network automation for smart environments: A healthcare 4.0 use case." *IEEE Access*, 11, 136565-136576. [DOI](https://doi.org/10.1109/ACCESS.2023.3338165)
 9. Sun, S., et al. (2025). "SmartIntent: A Serverless LLM-Oriented Architecture for Intent-Driven Building Automation." *IEEE CloudCom*.
 
-### Academic Publications — Software-Defined Networking (SDN)
+#### Software-Defined Networking (SDN)
 10. Mostafaei, H., & Menth, M. (2018). "Software-defined wireless sensor networks: A survey." *Journal of Network and Computer Applications*, 119, 42-56. [DOI](https://doi.org/10.1016/j.jnca.2018.06.016)
 11. Olivier, F., Gonzalez, C., & Nolot, F. (2015). "SDN based architecture for clustered WSN." *2015 9th International Conference on Innovative Mobile and Internet Services in Ubiquitous Computing* (pp. 342-347). IEEE.
 12. Kazi, B. U., et al. (2025). "A Survey on Software Defined Network-Enabled Edge Cloud Networks: Challenges and Future Research Directions." *Network*, 5(2), 16.
 13. Orozco-Santos, F., et al. (2021). "Enhancing SDN WISE with Slicing Over TSCH." *Sensors*, 21(4), 1075. [DOI](https://doi.org/10.3390/s21041075)
 
-### Academic Publications — Healthcare IoT and Medical Sensors
+#### Healthcare IoT and Medical Sensors
 14. Upadhyay, S., et al. (2023). "Challenges and limitation analysis of an IoT-dependent system for deployment in smart healthcare using communication standards features." *Sensors*, 23(11), 5155. [DOI](https://doi.org/10.3390/s23115155)
 15. Recmanik, M., et al. (2024). "A review of patient bed sensors for monitoring of vital signs." *Sensors*, 24(15), 4767. [DOI](https://doi.org/10.3390/s24154767)
 16. Ocagli, H., et al. (2024). "In-Bed Monitoring: A Systematic Review of the Evaluation of In-Bed Movements Through Bed Sensors." *Informatics*, 11(4). MDPI.
@@ -309,10 +263,7 @@ This project is developed within the **Paris-Saclay innovation ecosystem** at th
 18. Scarpato, N., et al. (2017). "E-health-IoT universe: A review." *Management*, 21(44), 46.
 19. Kelechi, A. H., et al. (2022). "Design of a low-cost air quality monitoring system using arduino and thingspeak." *Computers, Materials & Continua*, 70, 151-169.
 
-### Academic Publications — Electronic Health Records (EHR)
-20. Kataria, S., & Ravindran, V. (2020). "Electronic health records: a critical appraisal of strengths and limitations." *Journal of the Royal College of Physicians of Edinburgh*, 50(3), 262-268. [DOI](https://doi.org/10.4997/JRCPE.2020.309)
-
-### Academic Publications — LLM-Based Multi-Agent Systems
+#### LLM-Based Multi-Agent Systems
 21. Li, Z., et al. (2024). "Autoflow: Automated workflow generation for large language model agents." *arXiv preprint* arXiv:2407.12821.
 22. Yang, Y., et al. (2025). "Agentnet: Decentralized evolutionary coordination for llm-based multi-agent systems." *arXiv preprint* arXiv:2504.00587.
 
@@ -324,8 +275,7 @@ This project is developed within the **Paris-Saclay innovation ecosystem** at th
 
 <div align="center">
 
-*Built with dedication at **Université Évry Paris-Saclay · Laboratoire IBISC (EA 4526)***  
-*D4Gen 2026 Hackathon — Smart Healthcare Ecosystem Challenge*  
+*Built with dedication at **D4Gen 2026 Hackathon — Smart Healthcare Ecosystem Challenge***  
 *Genopole · Paris-Saclay Innovation Ecosystem*
 
 </div>
