@@ -5,7 +5,7 @@
 ### Healthcare-Oriented Privacy-Preserving Platform for Electronic Health Record Reliable Sharing (HOPPERS)
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.133-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
 [![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org)
 [![CrewAI](https://img.shields.io/badge/CrewAI-1.10-FF4B4B?style=flat-square)](https://crewai.com)
 [![D4Gen 2026](https://img.shields.io/badge/D4Gen%202026-Hackathon-purple?style=flat-square)](https://docs.google.com/presentation/d/1dIFfxO6JmQFQiGihexDT0RxHEQ_-1zaR/edit?slide=id.p1#slide=id.p1)
