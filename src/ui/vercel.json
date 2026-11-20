@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "pnpm install && pnpm exec prisma generate && pnpm exec prisma db push"
+}
